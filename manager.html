@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html lang="bg">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShiftFlow — Мениджър</title>
+  <title>TimeLedger Team — Мениджър</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0d1117" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet" />
 </head>
+
 <body>
   <div class="bg-orbs">
     <div class="orb orb-1"></div>
@@ -20,7 +27,7 @@
   <nav class="topnav glass-card">
     <div class="nav-logo">
       <span class="logo-icon">⏱</span>
-      <span class="logo-text">ShiftFlow</span>
+      <span class="logo-text">TimeLedger Team</span>
       <span class="role-badge manager-badge" data-i18n="role_manager">Мениджър</span>
     </div>
     <div class="nav-actions">
@@ -64,7 +71,7 @@
         <h2 class="section-title" data-i18n="today_title">📋 Днешен изглед</h2>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <input type="date" id="view-date-picker" class="form-input date-picker-inline"
-                 onchange="onDatePickerChange(this.value)" />
+            onchange="onDatePickerChange(this.value)" />
           <span class="date-badge" id="today-date-label">—</span>
         </div>
       </div>
@@ -119,7 +126,8 @@
       <div class="glass-card day-detail hidden" id="mgr-day-detail" style="margin-bottom:1rem;">
         <div class="day-detail-hdr">
           <span class="day-detail-title" id="mgr-day-detail-title">—</span>
-          <button class="icon-btn" onclick="document.getElementById('mgr-day-detail').classList.add('hidden')">✕</button>
+          <button class="icon-btn"
+            onclick="document.getElementById('mgr-day-detail').classList.add('hidden')">✕</button>
         </div>
         <div id="mgr-day-detail-content" class="day-detail-body"></div>
       </div>
@@ -127,7 +135,8 @@
       <!-- Weekly view -->
       <div class="section-header">
         <h2 class="section-title" data-i18n="cal_weekly">📅 Седмичен изглед</h2>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-schedule')">+ <span data-i18n="btn_add">Добави</span></button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-schedule')">+ <span
+            data-i18n="btn_add">Добави</span></button>
       </div>
 
       <div class="week-nav glass-card">
@@ -138,11 +147,16 @@
 
       <div class="shift-type-filters glass-card">
         <span class="filter-label" data-i18n="filter_type">Вид смяна:</span>
-        <button class="shift-filter-btn active" data-type="all" onclick="filterShiftType('all',this)" data-i18n="filter_all">Всички</button>
-        <button class="shift-filter-btn" data-type="6h" onclick="filterShiftType('6h',this)"><span class="shift-badge shift-6h">6ч</span></button>
-        <button class="shift-filter-btn" data-type="12h" onclick="filterShiftType('12h',this)"><span class="shift-badge shift-12h">12ч</span></button>
-        <button class="shift-filter-btn" data-type="weekend" onclick="filterShiftType('weekend',this)"><span class="shift-badge shift-wknd">Уикенд</span></button>
-        <button class="shift-filter-btn" data-type="overtime" onclick="filterShiftType('overtime',this)"><span class="shift-badge shift-ot">Извънреден</span></button>
+        <button class="shift-filter-btn active" data-type="all" onclick="filterShiftType('all',this)"
+          data-i18n="filter_all">Всички</button>
+        <button class="shift-filter-btn" data-type="6h" onclick="filterShiftType('6h',this)"><span
+            class="shift-badge shift-6h">6ч</span></button>
+        <button class="shift-filter-btn" data-type="12h" onclick="filterShiftType('12h',this)"><span
+            class="shift-badge shift-12h">12ч</span></button>
+        <button class="shift-filter-btn" data-type="weekend" onclick="filterShiftType('weekend',this)"><span
+            class="shift-badge shift-wknd">Уикенд</span></button>
+        <button class="shift-filter-btn" data-type="overtime" onclick="filterShiftType('overtime',this)"><span
+            class="shift-badge shift-ot">Извънреден</span></button>
       </div>
 
       <div class="schedule-grid glass-card" id="schedule-grid">
@@ -154,7 +168,8 @@
     <section id="tab-employees" class="tab-section">
       <div class="section-header">
         <h2 class="section-title" data-i18n="tab_employees">👥 Служители</h2>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-employee')">+ <span data-i18n="btn_new_emp">Нов служител</span></button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-employee')">+ <span
+            data-i18n="btn_new_emp">Нов служител</span></button>
       </div>
       <div class="employees-grid" id="employees-grid">
         <div class="empty-state">Зареждане...</div>
@@ -165,13 +180,15 @@
     <section id="tab-penalties" class="tab-section">
       <div class="section-header">
         <h2 class="section-title" data-i18n="tab_fines">⚠️ Наказания</h2>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-penalty')">+ <span data-i18n="btn_add">Добави</span></button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-penalty')">+ <span
+            data-i18n="btn_add">Добави</span></button>
       </div>
 
       <div class="glass-card" style="padding:0.75rem 1rem;margin-bottom:0.75rem;">
         <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
           <span style="font-size:0.78rem;color:var(--text-muted)" data-i18n="lbl_filter">Филтър:</span>
-          <select id="pen-filter-emp" class="form-input form-select" style="flex:1;max-width:220px;" onchange="renderPenaltiesTab()">
+          <select id="pen-filter-emp" class="form-input form-select" style="flex:1;max-width:220px;"
+            onchange="renderPenaltiesTab()">
             <option value="" data-i18n="filter_all_emp">Всички служители</option>
           </select>
         </div>
@@ -273,7 +290,8 @@
         </div>
         <div class="form-group" style="margin-bottom:0.5rem;">
           <label class="form-label">Съобщение</label>
-          <textarea id="notif-msg-inline" class="form-input form-textarea" placeholder="Текст на известието..." style="min-height:80px;"></textarea>
+          <textarea id="notif-msg-inline" class="form-input form-textarea" placeholder="Текст на известието..."
+            style="min-height:80px;"></textarea>
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
           <select id="notif-target-inline" class="form-input form-select" style="flex:1;max-width:200px;">
@@ -303,7 +321,8 @@
         <div class="profile-meta">
           <div class="profile-name" id="mgr-profile-name">—</div>
           <div class="profile-uname" id="mgr-profile-username">—</div>
-          <span class="role-badge manager-badge" style="margin-top:6px;display:inline-block" data-i18n="role_manager">Мениджър</span>
+          <span class="role-badge manager-badge" style="margin-top:6px;display:inline-block"
+            data-i18n="role_manager">Мениджър</span>
         </div>
       </div>
 
@@ -360,7 +379,8 @@
       </div>
       -->
 
-      <button class="btn btn-danger btn-full" style="margin-top:1rem;" onclick="logout()" data-i18n="btn_logout">🚪 Изход</button>
+      <button class="btn btn-danger btn-full" style="margin-top:1rem;" onclick="logout()" data-i18n="btn_logout">🚪
+        Изход</button>
     </section>
 
   </main>
@@ -413,7 +433,8 @@
         <input type="number" id="edit-emp-rate-field" class="form-input" step="0.5" />
       </div>
       <div class="form-group">
-        <label class="form-label">Нова парола <span style="color:var(--text-faint);font-size:0.72rem;">(остави празно = без промяна)</span></label>
+        <label class="form-label">Нова парола <span style="color:var(--text-faint);font-size:0.72rem;">(остави празно =
+            без промяна)</span></label>
         <input type="text" id="edit-emp-pass-field" class="form-input" placeholder="Нова парола..." />
       </div>
       <div class="form-group">
@@ -453,7 +474,8 @@
           <button class="stype-btn" data-type="6h" onclick="selectShiftType('6h',this)">🟢 6 часа</button>
           <button class="stype-btn" data-type="12h" onclick="selectShiftType('12h',this)">🟠 12 часа</button>
           <button class="stype-btn" data-type="weekend" onclick="selectShiftType('weekend',this)">🟣 Уикенд</button>
-          <button class="stype-btn" data-type="overtime" onclick="selectShiftType('overtime',this)">🔴 Извънреден</button>
+          <button class="stype-btn" data-type="overtime" onclick="selectShiftType('overtime',this)">🔴
+            Извънреден</button>
           <button class="stype-btn" data-type="dayoff" onclick="selectShiftType('dayoff',this)">⭕ Почивен</button>
         </div>
         <input type="hidden" id="sched-type" value="regular" />
@@ -599,4 +621,5 @@
   <script src="app.js"></script>
   <script>initManagerDashboard();</script>
 </body>
+
 </html>

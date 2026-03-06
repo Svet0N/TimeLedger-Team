@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="bg">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TimeLedger Team — SuperAdmin</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <meta name="theme-color" content="#0d1117" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --purple-mid: rgba(183, 148, 244, 0.22);
+        }
+
+        .sa-topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            height: var(--nav-h);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.25rem;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(183, 148, 244, .2);
+        }
+
+        .sa-logo {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .sa-logo .logo-text {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--purple);
+        }
+
+        .sa-badge {
+            font-size: .62rem;
+            font-weight: 700;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border-radius: 20px;
+            background: var(--purple-dim);
+            color: var(--purple);
+            border: 1px solid rgba(183, 148, 244, .35);
+        }
+
+        .sa-content {
+            position: relative;
+            z-index: 1;
+            padding: calc(var(--nav-h) + 1.5rem) 1rem 3rem;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        /* Stats */
+        .sa-stats-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: .65rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .sa-stat {
+            padding: 1rem .75rem;
+            text-align: center;
+        }
+
+        .sa-stat-num {
+            display: block;
+            font-size: 1.6rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sa-stat-lbl {
+            display: block;
+            font-size: .62rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .sa-stat-num.purple {
+            color: var(--purple);
+            text-shadow: 0 0 14px rgba(183, 148, 244, .4);
+        }
+
+        .sa-stat-num.accent {
+            color: var(--accent);
+            text-shadow: 0 0 14px var(--accent-glow);
+        }
+
+        .sa-stat-num.green {
+            color: var(--green);
+            text-shadow: 0 0 14px var(--green-glow);
+        }
+
+        .sa-stat-num.orange {
+            color: var(--orange);
+            text-shadow: 0 0 14px rgba(246, 173, 85, .4);
+        }
+
+        .sa-stat-num.teal {
+            color: var(--teal);
+            text-shadow: 0 0 14px var(--teal-glow);
+        }
+
+        /* Section header */
+        .sa-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: .9rem;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+
+        .sa-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        /* Search + sort bar */
+        .rest-controls {
+            display: flex;
+            gap: .6rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .rest-search {
+            flex: 1;
+            min-width: 180px;
+            padding: .5rem .9rem;
+            border-radius: var(--radius-sm);
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: inherit;
+            font-size: .85rem;
+            outline: none;
+            transition: border-color var(--transition);
+        }
+
+        .rest-search:focus {
+            border-color: var(--purple);
+        }
+
+        .rest-sort {
+            padding: .5rem .75rem;
+            border-radius: var(--radius-sm);
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: inherit;
+            font-size: .82rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Grid */
+        .rest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 1rem;
+        }
+
+        .rest-card {
+            padding: 0;
+            overflow: hidden;
+            transition: transform var(--transition), box-shadow var(--transition);
+            cursor: default;
+        }
+
+        .rest-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .4);
+        }
+
+        .rest-card-photo {
+            height: 110px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(183, 148, 244, .2), rgba(99, 179, 237, .15));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rest-card-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .rest-card-photo-placeholder {
+            font-size: 3rem;
+            opacity: .45;
+        }
+
+        .rest-plan-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: .6rem;
+            font-weight: 800;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            padding: 2px 9px;
+            border-radius: 20px;
+        }
+
+        .plan-free {
+            background: rgba(104, 211, 145, .15);
+            color: var(--green);
+            border: 1px solid rgba(104, 211, 145, .3);
+        }
+
+        .plan-starter {
+            background: rgba(99, 179, 237, .15);
+            color: var(--accent);
+            border: 1px solid rgba(99, 179, 237, .3);
+        }
+
+        .plan-pro {
+            background: var(--purple-dim);
+            color: var(--purple);
+            border: 1px solid rgba(183, 148, 244, .35);
+        }
+
+        .rest-activity-badge {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            font-size: .6rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .activity-today {
+            background: rgba(104, 211, 145, .2);
+            color: var(--green);
+            border: 1px solid rgba(104, 211, 145, .3);
+        }
+
+        .activity-week {
+            background: rgba(246, 224, 94, .15);
+            color: var(--yellow);
+            border: 1px solid rgba(246, 224, 94, .3);
+        }
+
+        .activity-old {
+            background: rgba(252, 129, 129, .12);
+            color: var(--red);
+            border: 1px solid rgba(252, 129, 129, .25);
+        }
+
+        .trial-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: .58rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(246, 173, 85, .2);
+            color: var(--orange);
+            border: 1px solid rgba(246, 173, 85, .3);
+        }
+
+        .rest-card-body {
+            padding: 1rem;
+        }
+
+        .rest-card-name {
+            font-size: .95rem;
+            font-weight: 700;
+            margin-bottom: .25rem;
+        }
+
+        .rest-card-addr {
+            font-size: .73rem;
+            color: var(--text-muted);
+            margin-bottom: .75rem;
+        }
+
+        .rest-card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: .35rem;
+            margin-bottom: .85rem;
+        }
+
+        .rest-mini-stat {
+            text-align: center;
+            padding: .4rem;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border2);
+        }
+
+        .rest-mini-val {
+            display: block;
+            font-size: .95rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent);
+        }
+
+        .rest-mini-lbl {
+            display: block;
+            font-size: .57rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .rest-mgr-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: .75rem;
+            min-height: 24px;
+        }
+
+        .mgr-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--purple-dim);
+            color: var(--purple);
+            border: 1px solid rgba(183, 148, 244, .3);
+            padding: 2px 9px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+
+        .rest-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-bottom: .75rem;
+        }
+
+        .qa-btn {
+            padding: .4rem .2rem;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-sm);
+            font-size: .65rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: inherit;
+            text-align: center;
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .qa-btn:hover {
+            border-color: var(--purple);
+            color: var(--purple);
+            background: var(--purple-dim);
+        }
+
+        .qa-icon {
+            font-size: 1rem;
+        }
+
+        .rest-card-footer {
+            display: flex;
+            gap: 5px;
+            padding-top: .7rem;
+            border-top: 1px solid var(--border2);
+        }
+
+        /* System stats row */
+        .sys-stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: .65rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .sys-stat-card {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: .85rem;
+        }
+
+        .sys-stat-icon {
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+
+        .sys-stat-num {
+            font-size: 1.4rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--teal);
+        }
+
+        .sys-stat-lbl {
+            font-size: .7rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Two-col layout for bottom panels */
+        .sa-bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .sa-panel {
+            padding: 1.1rem;
+        }
+
+        .sa-panel-title {
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: var(--text-muted);
+            margin-bottom: .85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Activity feed */
+        .activity-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: .7rem;
+            padding: .55rem .5rem;
+            border-radius: var(--radius-sm);
+            transition: background var(--transition);
+        }
+
+        .activity-item:hover {
+            background: var(--surface2);
+        }
+
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+            background: var(--purple);
+        }
+
+        .activity-dot.green {
+            background: var(--green);
+        }
+
+        .activity-dot.accent {
+            background: var(--accent);
+        }
+
+        .activity-dot.red {
+            background: var(--red);
+        }
+
+        .activity-dot.orange {
+            background: var(--orange);
+        }
+
+        .activity-text {
+            font-size: .8rem;
+            flex: 1;
+        }
+
+        .activity-time {
+            font-size: .67rem;
+            color: var(--text-faint);
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        /* Admin logs */
+        .logs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .45rem .5rem;
+            border-radius: var(--radius-sm);
+            font-size: .77rem;
+            border-bottom: 1px solid var(--border2);
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-action {
+            font-weight: 600;
+        }
+
+        .log-detail {
+            font-size: .7rem;
+            color: var(--text-muted);
+        }
+
+        .log-ts {
+            font-size: .65rem;
+            color: var(--text-faint);
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+            margin-left: .5rem;
+        }
+
+        /* Plans section */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+            gap: .75rem;
+        }
+
+        .plan-card {
+            padding: 1.2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform var(--transition);
+        }
+
+        .plan-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .plan-card-icon {
+            font-size: 2rem;
+            margin-bottom: .4rem;
+        }
+
+        .plan-card-name {
+            font-size: 1rem;
+            font-weight: 800;
+            margin-bottom: .2rem;
+        }
+
+        .plan-card-price {
+            font-size: 1.3rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: .7rem;
+        }
+
+        .plan-card-features {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: left;
+        }
+
+        .plan-feature {
+            font-size: .77rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .plan-feature::before {
+            content: '✓';
+            color: var(--green);
+            font-weight: 700;
+            font-size: .82rem;
+            flex-shrink: 0;
+        }
+
+        .plan-card.plan-pro-card {
+            border-color: rgba(183, 148, 244, .35);
+        }
+
+        .plan-card.plan-pro-card .plan-card-name,
+        .plan-card.plan-pro-card .plan-card-price {
+            color: var(--purple);
+        }
+
+        /* Photo upload */
+        .photo-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--surface2);
+            position: relative;
+        }
+
+        .photo-upload-area:hover {
+            border-color: var(--purple);
+        }
+
+        .photo-upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .photo-upload-preview {
+            width: 70px;
+            height: 70px;
+            border-radius: var(--radius);
+            object-fit: cover;
+            margin: 0 auto .4rem;
+            display: block;
+        }
+
+        .photo-upload-icon {
+            font-size: 1.8rem;
+            opacity: .45;
+            margin-bottom: .3rem;
+        }
+
+        .photo-upload-text {
+            font-size: .75rem;
+            color: var(--text-muted);
+        }
+
+        /* Manager rows in modal */
+        .mgr-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .55rem .75rem;
+            border-radius: var(--radius-sm);
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            margin-bottom: 5px;
+            gap: .5rem;
+        }
+
+        .mgr-row-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            flex: 1;
+        }
+
+        .mgr-row-name {
+            font-size: .84rem;
+            font-weight: 700;
+        }
+
+        .mgr-row-user {
+            font-size: .7rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mgr-row-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .mgr-add-row {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+            margin-top: .6rem;
+            flex-wrap: wrap;
+        }
+
+        .separator {
+            height: 1px;
+            background: var(--border2);
+            margin: .8rem 0;
+        }
+
+        @media (max-width:700px) {
+            .sa-stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .rest-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sys-stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .sa-bottom-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .rest-quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-orbs">
+        <div class="orb orb-1" style="background:radial-gradient(circle,#b794f4 0%,transparent 70%)"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- TOP BAR -->
+    <nav class="sa-topbar glass-card">
+        <div class="sa-logo">
+            <span style="font-size:1.3rem">⏱</span>
+            <span class="logo-text">TimeLedger Team</span>
+            <span class="sa-badge">SuperAdmin</span>
+        </div>
+        <div class="nav-actions">
+            <button class="icon-btn" onclick="toggleLogsPanel()" title="Admin Logs">📋</button>
+            <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+            <span class="nav-user" id="sa-nav-username">—</span>
+            <button class="btn btn-ghost btn-sm" onclick="logout()">Изход</button>
+        </div>
+    </nav>
+
+    <main class="sa-content">
+
+        <!-- TOP STATS (5 cols) -->
+        <div class="sa-stats-bar">
+            <div class="sa-stat glass-card">
+                <span class="sa-stat-num purple" id="sa-stat-restaurants">0</span>
+                <span class="sa-stat-lbl">Ресторанти</span>
+            </div>
+            <div class="sa-stat glass-card">
+                <span class="sa-stat-num accent" id="sa-stat-managers">0</span>
+                <span class="sa-stat-lbl">Мениджъри</span>
+            </div>
+            <div class="sa-stat glass-card">
+                <span class="sa-stat-num green" id="sa-stat-employees">0</span>
+                <span class="sa-stat-lbl">Служители</span>
+            </div>
+            <div class="sa-stat glass-card">
+                <span class="sa-stat-num orange" id="sa-stat-active">0</span>
+                <span class="sa-stat-lbl">Платени планове</span>
+            </div>
+            <div class="sa-stat glass-card">
+                <span class="sa-stat-num teal" id="sa-stat-revenue">0 лв</span>
+                <span class="sa-stat-lbl">Приход / мес</span>
+            </div>
+        </div>
+
+        <!-- SYSTEM METRICS -->
+        <div class="sa-section-header">
+            <span class="sa-section-title">📊 Системни метрики</span>
+        </div>
+        <div class="sys-stats-row">
+            <div class="sys-stat-card glass-card">
+                <span class="sys-stat-icon">🔁</span>
+                <div>
+                    <div class="sys-stat-num" id="sys-shifts">0</div>
+                    <div class="sys-stat-lbl">Смени в системата</div>
+                </div>
+            </div>
+            <div class="sys-stat-card glass-card">
+                <span class="sys-stat-icon">✅</span>
+                <div>
+                    <div class="sys-stat-num" id="sys-checkins">0</div>
+                    <div class="sys-stat-lbl">Check-ins (присъствия)</div>
+                </div>
+            </div>
+            <div class="sys-stat-card glass-card">
+                <span class="sys-stat-icon">⏳</span>
+                <div>
+                    <div class="sys-stat-num" id="sys-hours">0 ч</div>
+                    <div class="sys-stat-lbl">Общо отработени часа</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESTAURANTS -->
+        <div class="sa-section-header" style="margin-top:.5rem">
+            <span class="sa-section-title">🏢 Ресторанти и локации</span>
+            <button class="btn btn-primary btn-sm" onclick="openCreateRestModal()">+ Нов ресторант</button>
+        </div>
+
+        <!-- Search + Sort -->
+        <div class="rest-controls">
+            <input class="rest-search" id="rest-search-input" placeholder="🔍 Търси по име или адрес…"
+                oninput="filterAndRender()" />
+            <select class="rest-sort" id="rest-sort-sel" onchange="filterAndRender()">
+                <option value="newest">📅 Най-нови</option>
+                <option value="employees">👥 Най-много служители</option>
+                <option value="plan">💳 По план</option>
+                <option value="activity">🟢 Последна активност</option>
+            </select>
+        </div>
+
+        <div class="rest-grid" id="sa-rest-grid">
+            <div class="empty-state">Зареждане…</div>
+        </div>
+
+        <!-- SUBSCRIPTION PLANS -->
+        <div class="sa-section-header" style="margin-top:2rem">
+            <span class="sa-section-title">💳 Абонаментни планове</span>
+        </div>
+        <div class="plans-grid">
+            <div class="plan-card glass-card">
+                <div class="plan-card-icon">🆓</div>
+                <div class="plan-card-name">Free</div>
+                <div class="plan-card-price" style="color:var(--green)">0 лв/мес</div>
+                <div class="plan-card-features">
+                    <div class="plan-feature">До 5 служители</div>
+                    <div class="plan-feature">Базово разписание</div>
+                    <div class="plan-feature">История 1 месец</div>
+                </div>
+            </div>
+            <div class="plan-card glass-card">
+                <div class="plan-card-icon">🚀</div>
+                <div class="plan-card-name">Starter</div>
+                <div class="plan-card-price" style="color:var(--accent)">29 лв/мес</div>
+                <div class="plan-card-features">
+                    <div class="plan-feature">До 15 служители</div>
+                    <div class="plan-feature">Разписание + QR check-in</div>
+                    <div class="plan-feature">История 12 месеца</div>
+                    <div class="plan-feature">Известия</div>
+                </div>
+            </div>
+            <div class="plan-card glass-card plan-pro-card">
+                <div class="plan-card-icon">⭐</div>
+                <div class="plan-card-name">Pro</div>
+                <div class="plan-card-price">79 лв/мес</div>
+                <div class="plan-card-features">
+                    <div class="plan-feature">Неограничени служители</div>
+                    <div class="plan-feature">Пълна аналитика</div>
+                    <div class="plan-feature">QR check-in + известия</div>
+                    <div class="plan-feature">CSV / Excel / PDF отчети</div>
+                    <div class="plan-feature">Приоритетна поддръжка</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM: Activity + Logs -->
+        <div class="sa-bottom-grid">
+            <div class="sa-panel glass-card">
+                <div class="sa-panel-title">⚡ Последна активност <span id="activity-count"
+                        style="font-size:.7rem;color:var(--text-faint)"></span></div>
+                <div class="activity-feed" id="activity-feed"></div>
+            </div>
+            <div class="sa-panel glass-card" id="logs-panel">
+                <div class="sa-panel-title">📋 Admin Logs <button class="btn btn-outline btn-xs"
+                        onclick="clearLogs()">Изчисти</button></div>
+                <div class="logs-list" id="admin-logs-list"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- ===== MODAL: CREATE / EDIT RESTAURANT ===== -->
+    <div class="modal-overlay hidden" id="modal-rest">
+        <div class="modal glass-card modal-lg" style="max-width:560px">
+            <div class="modal-header">
+                <h3 id="modal-rest-title">🏢 Нов ресторант</h3>
+                <button class="icon-btn" onclick="closeModal('modal-rest')">✕</button>
+            </div>
+
+            <label class="photo-upload-area" id="photo-upload-area">
+                <input type="file" id="rest-photo-input" accept="image/*" onchange="handlePhotoUpload(this)" />
+                <div id="photo-placeholder">
+                    <div class="photo-upload-icon">🖼️</div>
+                    <div class="photo-upload-text">Снимка / лого (макс. 2MB)</div>
+                </div>
+                <img id="photo-preview" class="photo-upload-preview" style="display:none" alt="Preview" />
+            </label>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.9rem">
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Име на ресторанта</label>
+                    <input type="text" id="rest-name" class="form-input" placeholder="Ресторант „Ла Виола" …" />
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Адрес</label>
+                    <input type="text" id="rest-address" class="form-input" placeholder="бул. Витоша 12…" />
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem">
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Абонаментен план</label>
+                    <select id="rest-plan" class="form-input form-select" onchange="onPlanChange()">
+                        <option value="free">Free — 0 лв/мес</option>
+                        <option value="starter">Starter — 29 лв/мес</option>
+                        <option value="pro" selected>Pro — 79 лв/мес</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0" id="trial-group">
+                    <label class="form-label">Trial дни (0 = без trial)</label>
+                    <input type="number" id="rest-trial-days" class="form-input" value="0" min="0" max="90" />
+                </div>
+            </div>
+
+            <div class="separator"></div>
+
+            <!-- MANAGERS section -->
+            <div
+                style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:.6rem">
+                👥 Мениджъри</div>
+            <div id="modal-mgr-list"></div>
+
+            <div class="mgr-add-row">
+                <select id="rest-add-mgr-sel" class="form-input form-select" style="flex:1;font-size:.82rem">
+                    <option value="">— Избери съществуващ мениджър —</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" onclick="addExistingMgr()">+ Добави</button>
+                <button class="btn btn-outline btn-sm" onclick="openCreateMgrInline()">+ Нов</button>
+            </div>
+
+            <!-- Inline create manager form (hidden by default) -->
+            <div id="inline-mgr-form"
+                style="display:none;margin-top:.75rem;padding:.85rem;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm)">
+                <div style="font-size:.75rem;font-weight:700;color:var(--text-muted);margin-bottom:.5rem">🆕 Нов
+                    мениджър</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                    <input id="new-mgr-name" class="form-input" placeholder="Пълно име" style="font-size:.83rem" />
+                    <input id="new-mgr-username" class="form-input" placeholder="Потребителско"
+                        style="font-size:.83rem" />
+                    <input id="new-mgr-pass" class="form-input" placeholder="Парола" type="password"
+                        style="font-size:.83rem" />
+                    <div style="display:flex;gap:.4rem">
+                        <button class="btn btn-primary btn-sm" style="flex:1" onclick="saveNewMgr()">Създай</button>
+                        <button class="btn btn-ghost btn-sm" onclick="closeInlineMgr()">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="rest-edit-id" value="" />
+
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal('modal-rest')">Отказ</button>
+                <button class="btn btn-primary" onclick="saveRestaurant()" id="rest-save-btn">Създай</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: EDIT MANAGER ===== -->
+    <div class="modal-overlay hidden" id="modal-edit-mgr">
+        <div class="modal glass-card" style="max-width:400px">
+            <div class="modal-header">
+                <h3>✏️ Редактирай мениджър</h3>
+                <button class="icon-btn" onclick="closeModal('modal-edit-mgr')">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Пълно име</label>
+                <input type="text" id="edit-mgr-name" class="form-input" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Потребителско</label>
+                <input type="text" id="edit-mgr-username" class="form-input" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Нова парола (остави празно за без промяна)</label>
+                <input type="password" id="edit-mgr-pass" class="form-input" placeholder="••••" />
+            </div>
+            <input type="hidden" id="edit-mgr-id" />
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal('modal-edit-mgr')">Отказ</button>
+                <button class="btn btn-primary" onclick="saveEditedMgr()">Запази</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: CHANGE PLAN ===== -->
+    <div class="modal-overlay hidden" id="modal-change-plan">
+        <div class="modal glass-card" style="max-width:380px;text-align:center">
+            <div class="modal-header">
+                <h3>💳 Смени план</h3><button class="icon-btn" onclick="closeModal('modal-change-plan')">✕</button>
+            </div>
+            <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:1rem" id="change-plan-rest-name"></p>
+            <select id="change-plan-sel" class="form-input form-select" style="margin-bottom:1rem">
+                <option value="free">🆓 Free — 0 лв/мес</option>
+                <option value="starter">🚀 Starter — 29 лв/мес</option>
+                <option value="pro">⭐ Pro — 79 лв/мес</option>
+            </select>
+            <input type="hidden" id="change-plan-rest-id" />
+            <div class="modal-actions" style="justify-content:center">
+                <button class="btn btn-ghost" onclick="closeModal('modal-change-plan')">Отказ</button>
+                <button class="btn btn-primary" onclick="confirmChangePlan()">Потвърди</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: DELETE CONFIRM ===== -->
+    <div class="modal-overlay hidden" id="modal-delete-rest">
+        <div class="modal glass-card" style="max-width:380px;text-align:center">
+            <div style="font-size:2.5rem;margin-bottom:.5rem">⚠️</div>
+            <h3 style="margin-bottom:.5rem">Изтрий ресторант?</h3>
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:1.4rem">Данните за служителите ще се
+                запазят, но ресторантът ще бъде премахнат.</p>
+            <div class="modal-actions" style="justify-content:center">
+                <button class="btn btn-ghost" onclick="closeModal('modal-delete-rest')">Отказ</button>
+                <button class="btn btn-danger" onclick="confirmDeleteRest()">🗑 Изтрий</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // ── CONSTANTS ─────────────────────────────────────────────────
+        const PLAN_LABEL = { free: 'Free', starter: 'Starter', pro: 'Pro' };
+        const PLAN_CLASS = { free: 'plan-free', starter: 'plan-starter', pro: 'plan-pro' };
+        const PLAN_ICON = { free: '🆓', starter: '🚀', pro: '⭐' };
+        const PLAN_PRICE = { free: 0, starter: 29, pro: 79 };
+        const TODAY = new Date().toISOString().split('T')[0];
+        const WEEK_AGO = new Date(Date.now() - 7 * 864e5).toISOString().split('T')[0];
+
+        // ── STATE ─────────────────────────────────────────────────────
+        let saPhotoDataUrl = null;
+        let saDeleteRestId = null;
+        let saModalMgrs = [];   // managers assigned in current modal session
+
+        // ── INIT ─────────────────────────────────────────────────────
+        function initSuperAdmin() {
+            applyTheme(); applyLang();
+            const user = Auth.requireRole('superadmin');
+            if (!user) return;
+            document.getElementById('sa-nav-username').textContent = user.name || user.username;
+            renderSAStats();
+            renderSysMetrics();
+            filterAndRender();
+            renderActivityFeed();
+            renderAdminLogs();
+        }
+
+        // ── TOP STATS ─────────────────────────────────────────────────
+        function renderSAStats() {
+            const rests = DB.getRestaurants();
+            const revenue = rests.reduce((s, r) => s + (PLAN_PRICE[r.subscriptionPlan] || 0), 0);
+            document.getElementById('sa-stat-restaurants').textContent = rests.length;
+            document.getElementById('sa-stat-managers').textContent = DB.getManagers().length;
+            document.getElementById('sa-stat-employees').textContent = DB.getEmployees().length;
+            document.getElementById('sa-stat-active').textContent = rests.filter(r => r.subscriptionPlan !== 'free').length;
+            document.getElementById('sa-stat-revenue').textContent = revenue + ' лв';
+        }
+
+        // ── SYSTEM METRICS ────────────────────────────────────────────
+        function renderSysMetrics() {
+            const shifts = JSON.parse(localStorage.getItem('sf_shifts_v3') || '[]');
+            const checkins = shifts.filter(s => s.worked_hours > 0).length;
+            const hours = shifts.reduce((s, sh) => s + parseFloat(sh.worked_hours || 0), 0);
+            document.getElementById('sys-shifts').textContent = shifts.length;
+            document.getElementById('sys-checkins').textContent = checkins;
+            document.getElementById('sys-hours').textContent = Math.round(hours) + ' ч';
+        }
+
+        // ── FILTER + SORT + RENDER ────────────────────────────────────
+        function filterAndRender() {
+            const q = (document.getElementById('rest-search-input')?.value || '').toLowerCase();
+            const sort = document.getElementById('rest-sort-sel')?.value || 'newest';
+            let rests = DB.getRestaurants().filter(r =>
+                r.name.toLowerCase().includes(q) || (r.address || '').toLowerCase().includes(q)
+            );
+            if (sort === 'employees') rests.sort((a, b) => DB.getEmployees(b.id).length - DB.getEmployees(a.id).length);
+            else if (sort === 'plan') {
+                const order = { pro: 0, starter: 1, free: 2 };
+                rests.sort((a, b) => (order[a.subscriptionPlan] || 2) - (order[b.subscriptionPlan] || 2));
+            } else if (sort === 'activity') {
+                rests.sort((a, b) => {
+                    const la = DB.getLastActivity(a.id) || '0000-00-00';
+                    const lb = DB.getLastActivity(b.id) || '0000-00-00';
+                    return lb.localeCompare(la);
+                });
+            } else {
+                rests.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            }
+            renderRestGrid(rests);
+        }
+
+        // ── RESTAURANT GRID ───────────────────────────────────────────
+        function renderRestGrid(rests) {
+            const grid = document.getElementById('sa-rest-grid');
+            if (!rests) rests = DB.getRestaurants();
+            if (rests.length === 0) {
+                grid.innerHTML = `<div class="glass-card" style="grid-column:1/-1"><div class="empty-state">Няма ресторанти. Добави първия с бутона по-горе.</div></div>`;
+                return;
+            }
+            grid.innerHTML = rests.map(r => {
+                const emps = DB.getEmployees(r.id);
+                const mgrs = DB.getManagers(r.id);
+                const plan = r.subscriptionPlan || 'free';
+                const lastAct = DB.getLastActivity(r.id);
+                const actCls = !lastAct ? 'activity-old' : lastAct >= TODAY ? 'activity-today' : lastAct >= WEEK_AGO ? 'activity-week' : 'activity-old';
+                const actLbl = !lastAct ? '🔴 Неактивен' : lastAct >= TODAY ? '🟢 Активен днес' : lastAct >= WEEK_AGO ? '🟡 Тази седмица' : '🔴 Неактивен';
+                const photo = r.photo
+                    ? `<img src="${r.photo}" alt="${r.name}" style="width:100%;height:100%;object-fit:cover"/>`
+                    : `<div class="rest-card-photo-placeholder">🏢</div>`;
+                const trialDays = r.trialDays | 0;
+                const trialHtml = trialDays > 0 && plan !== 'free'
+                    ? `<span class="trial-badge">⏳ Trial ${trialDays}д</span>` : '';
+                const mgrChips = mgrs.length
+                    ? mgrs.map(m => `<span class="mgr-chip">👤 ${m.name.split(' ')[0]}</span>`).join('')
+                    : `<span style="font-size:.7rem;color:var(--text-faint)">— Без мениджър —</span>`;
+                return `
+    <div class="rest-card glass-card">
+      <div class="rest-card-photo">
+        ${photo}
+        <span class="rest-plan-badge ${PLAN_CLASS[plan]}">${PLAN_ICON[plan]} ${PLAN_LABEL[plan]}</span>
+        <span class="rest-activity-badge ${actCls}">${actLbl}</span>
+        ${trialHtml}
+      </div>
+      <div class="rest-card-body">
+        <div class="rest-card-name">${r.name}</div>
+        <div class="rest-card-addr">📍 ${r.address || 'Без адрес'}</div>
+        <div class="rest-card-stats">
+          <div class="rest-mini-stat"><span class="rest-mini-val">${emps.length}</span><span class="rest-mini-lbl">Служители</span></div>
+          <div class="rest-mini-stat"><span class="rest-mini-val">${mgrs.length}</span><span class="rest-mini-lbl">Мениджъри</span></div>
+          <div class="rest-mini-stat"><span class="rest-mini-val" style="color:var(--teal);font-size:.8rem">${PLAN_PRICE[plan]} лв</span><span class="rest-mini-lbl">/ месец</span></div>
+        </div>
+        <div class="rest-mgr-list">${mgrChips}</div>
+        <div class="rest-quick-actions">
+          <button class="qa-btn" onclick="quickView('${r.id}','dashboard')" title="Табло"><span class="qa-icon">👁</span>Табло</button>
+          <button class="qa-btn" onclick="quickView('${r.id}','employees')" title="Служители"><span class="qa-icon">👥</span>Хора</button>
+          <button class="qa-btn" onclick="quickView('${r.id}','schedule')" title="График"><span class="qa-icon">📅</span>График</button>
+          <button class="qa-btn" onclick="openChangePlan('${r.id}')" title="Смени план"><span class="qa-icon">💳</span>План</button>
+        </div>
+        <div class="rest-card-footer">
+          <button class="btn btn-ghost btn-xs" onclick="openEditRestModal('${r.id}')">✏️ Редактирай</button>
+          <button class="btn btn-danger btn-xs" onclick="askDeleteRest('${r.id}')">🗑 Изтрий</button>
+        </div>
+      </div>
+    </div>`;
+            }).join('');
+        }
+
+        // ── QUICK ACTIONS ─────────────────────────────────────────────
+        function quickView(restId, tab) {
+            const r = DB.getRestaurant(restId); if (!r) return;
+            const mgrs = DB.getManagers(restId);
+            if (mgrs.length === 0) { showToast('Ресторантът няма мениджър!', 'error'); return; }
+            // Switch session to that manager temporarily — we just tell them the link
+            showToast(`Виж в мениджър панела като: ${mgrs[0].username}`, 'info');
+        }
+
+        // ── CHANGE PLAN MODAL ─────────────────────────────────────────
+        function openChangePlan(restId) {
+            const r = DB.getRestaurant(restId); if (!r) return;
+            document.getElementById('change-plan-rest-id').value = restId;
+            document.getElementById('change-plan-rest-name').textContent = r.name;
+            document.getElementById('change-plan-sel').value = r.subscriptionPlan || 'free';
+            openModal('modal-change-plan');
+        }
+        function confirmChangePlan() {
+            const restId = document.getElementById('change-plan-rest-id').value;
+            const plan = document.getElementById('change-plan-sel').value;
+            const r = DB.getRestaurant(restId); if (!r) return;
+            DB.updateRestaurant(restId, { subscriptionPlan: plan });
+            DB.addAdminLog('Plan changed', `${r.name} → ${PLAN_LABEL[plan]}`);
+            closeModal('modal-change-plan');
+            showToast(`Планът е сменен на ${PLAN_LABEL[plan]} ✓`);
+            renderSAStats(); filterAndRender(); renderAdminLogs(); renderActivityFeed();
+        }
+
+        // ── CREATE/EDIT MODAL ─────────────────────────────────────────
+        function onPlanChange() {
+            const plan = document.getElementById('rest-plan').value;
+            document.getElementById('trial-group').style.display = plan === 'free' ? 'none' : '';
+        }
+
+        function openCreateRestModal() {
+            document.getElementById('modal-rest-title').textContent = '🏢 Нов ресторант';
+            document.getElementById('rest-edit-id').value = '';
+            document.getElementById('rest-name').value = '';
+            document.getElementById('rest-address').value = '';
+            document.getElementById('rest-plan').value = 'pro';
+            document.getElementById('rest-trial-days').value = 0;
+            document.getElementById('rest-save-btn').textContent = 'Създай';
+            saPhotoDataUrl = null; saModalMgrs = [];
+            resetPhotoUpload();
+            populateAddMgrSelect('');
+            renderModalMgrList();
+            closeInlineMgr();
+            onPlanChange();
+            openModal('modal-rest');
+        }
+
+        function openEditRestModal(id) {
+            const r = DB.getRestaurant(id); if (!r) return;
+            document.getElementById('modal-rest-title').textContent = '✏️ Редактирай ресторант';
+            document.getElementById('rest-edit-id').value = r.id;
+            document.getElementById('rest-name').value = r.name;
+            document.getElementById('rest-address').value = r.address || '';
+            document.getElementById('rest-plan').value = r.subscriptionPlan || 'pro';
+            document.getElementById('rest-trial-days').value = r.trialDays || 0;
+            document.getElementById('rest-save-btn').textContent = 'Запази';
+            saPhotoDataUrl = r.photo || null;
+            resetPhotoUpload(r.photo);
+            saModalMgrs = DB.getManagers(id).map(m => ({ ...m }));
+            populateAddMgrSelect(id);
+            renderModalMgrList();
+            closeInlineMgr();
+            onPlanChange();
+            openModal('modal-rest');
+        }
+
+        function renderModalMgrList() {
+            const container = document.getElementById('modal-mgr-list');
+            if (saModalMgrs.length === 0) {
+                container.innerHTML = `<div style="font-size:.78rem;color:var(--text-faint);padding:.4rem 0">Няма назначени мениджъри.</div>`;
+                return;
+            }
+            container.innerHTML = saModalMgrs.map(m => `
+    <div class="mgr-row">
+      <div class="mgr-row-info">
+        <span class="mgr-row-name">👤 ${m.name}</span>
+        <span class="mgr-row-user">@${m.username}</span>
+      </div>
+      <div class="mgr-row-actions">
+        <button class="btn btn-outline btn-xs" onclick="openEditMgr('${m.id}')">✏️</button>
+        <button class="btn btn-danger btn-xs" onclick="removeMgrFromModal('${m.id}')">✕</button>
+      </div>
+    </div>`).join('');
+        }
+
+        function populateAddMgrSelect(currentRestId) {
+            const sel = document.getElementById('rest-add-mgr-sel');
+            const all = DB.getManagers();
+            sel.innerHTML = `<option value="">— Избери мениджър —</option>`;
+            all.filter(m => !saModalMgrs.find(sm => sm.id === m.id))
+                .forEach(m => sel.innerHTML += `<option value="${m.id}">${m.name} (@${m.username}) ${m.restaurantId && m.restaurantId !== currentRestId ? '[назначен]' : ''}</option>`);
+        }
+
+        function addExistingMgr() {
+            const sel = document.getElementById('rest-add-mgr-sel');
+            const id = sel.value; if (!id) return;
+            const mgr = DB.getEmployee(id) || DB.getManagers().find(m => m.id === id);
+            if (!mgr || saModalMgrs.find(m => m.id === id)) return;
+            saModalMgrs.push(mgr);
+            sel.value = '';
+            renderModalMgrList();
+            populateAddMgrSelect(document.getElementById('rest-edit-id').value);
+        }
+
+        function removeMgrFromModal(mgrId) {
+            saModalMgrs = saModalMgrs.filter(m => m.id !== mgrId);
+            renderModalMgrList();
+            populateAddMgrSelect(document.getElementById('rest-edit-id').value);
+        }
+
+        function openCreateMgrInline() { document.getElementById('inline-mgr-form').style.display = ''; }
+        function closeInlineMgr() { document.getElementById('inline-mgr-form').style.display = 'none'; }
+
+        function saveNewMgr() {
+            const name = document.getElementById('new-mgr-name').value.trim();
+            const username = document.getElementById('new-mgr-username').value.trim();
+            const pass = document.getElementById('new-mgr-pass').value.trim();
+            if (!name || !username || !pass) { showToast('Попълни всички полета', 'error'); return; }
+            try {
+                const mgr = DB.createManager({ name, username, password: pass });
+                saModalMgrs.push(mgr);
+                renderModalMgrList();
+                ['new-mgr-name', 'new-mgr-username', 'new-mgr-pass'].forEach(id => document.getElementById(id).value = '');
+                closeInlineMgr();
+                showToast(`Мениджър ${name} е създаден ✓`);
+                DB.addAdminLog('Manager created', name + ' @' + username);
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        // Edit manager modal
+        function openEditMgr(mgrId) {
+            const mgr = DB.getManagers().find(m => m.id === mgrId) || DB.getEmployee(mgrId);
+            if (!mgr) return;
+            document.getElementById('edit-mgr-id').value = mgrId;
+            document.getElementById('edit-mgr-name').value = mgr.name;
+            document.getElementById('edit-mgr-username').value = mgr.username;
+            document.getElementById('edit-mgr-pass').value = '';
+            openModal('modal-edit-mgr');
+        }
+        function saveEditedMgr() {
+            const id = document.getElementById('edit-mgr-id').value;
+            const name = document.getElementById('edit-mgr-name').value.trim();
+            const username = document.getElementById('edit-mgr-username').value.trim();
+            const pass = document.getElementById('edit-mgr-pass').value.trim();
+            if (!name || !username) { showToast('Попълни всички полета', 'error'); return; }
+            const data = { name, username };
+            if (pass) data.password = pass;
+            DB.updateEmployee(id, data);
+            const idx = saModalMgrs.findIndex(m => m.id === id);
+            if (idx >= 0) saModalMgrs[idx] = { ...saModalMgrs[idx], ...data };
+            renderModalMgrList();
+            closeModal('modal-edit-mgr');
+            showToast('Мениджърът е обновен ✓');
+            DB.addAdminLog('Manager updated', name);
+        }
+
+        // ── PHOTO UPLOAD ───────────────────────────────────────────────
+        function resetPhotoUpload(src) {
+            document.getElementById('rest-photo-input').value = '';
+            const ph = document.getElementById('photo-placeholder');
+            const pr = document.getElementById('photo-preview');
+            if (src) { ph.style.display = 'none'; pr.src = src; pr.style.display = 'block'; }
+            else { ph.style.display = ''; pr.style.display = 'none'; }
+        }
+        function handlePhotoUpload(input) {
+            const file = input.files[0]; if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { showToast('Файлът е по-голям от 2MB', 'error'); return; }
+            const r = new FileReader();
+            r.onload = e => {
+                saPhotoDataUrl = e.target.result;
+                document.getElementById('photo-placeholder').style.display = 'none';
+                const pr = document.getElementById('photo-preview'); pr.src = saPhotoDataUrl; pr.style.display = 'block';
+            };
+            r.readAsDataURL(file);
+        }
+
+        // ── SAVE RESTAURANT ───────────────────────────────────────────
+        function saveRestaurant() {
+            const id = document.getElementById('rest-edit-id').value.trim();
+            const name = document.getElementById('rest-name').value.trim();
+            const address = document.getElementById('rest-address').value.trim();
+            const subscriptionPlan = document.getElementById('rest-plan').value;
+            const trialDays = parseInt(document.getElementById('rest-trial-days').value) || 0;
+            if (!name) { showToast('Въведи име', 'error'); return; }
+            const data = { name, address, subscriptionPlan, trialDays, photo: saPhotoDataUrl || null };
+            let restId;
+            if (id) {
+                DB.updateRestaurant(id, data); restId = id;
+                // Sync managers
+                const prev = DB.getManagers(id);
+                prev.forEach(m => { if (!saModalMgrs.find(sm => sm.id === m.id)) DB.removeManagerFromRestaurant(m.id, id); });
+                saModalMgrs.forEach(m => DB.updateEmployee(m.id, { restaurantId: id }));
+                showToast('Ресторантът е обновен ✓');
+                DB.addAdminLog('Restaurant updated', name);
+            } else {
+                const rest = DB.createRestaurant(data); restId = rest.id;
+                saModalMgrs.forEach(m => DB.updateEmployee(m.id, { restaurantId: restId }));
+                showToast('Ресторантът е създаден ✓');
+                DB.addAdminLog('Restaurant created', name);
+            }
+            closeModal('modal-rest');
+            renderSAStats(); filterAndRender(); renderAdminLogs(); renderActivityFeed();
+        }
+
+        // ── DELETE ────────────────────────────────────────────────────
+        function askDeleteRest(id) { saDeleteRestId = id; openModal('modal-delete-rest'); }
+        function confirmDeleteRest() {
+            if (!saDeleteRestId) return;
+            const r = DB.getRestaurant(saDeleteRestId);
+            DB.deleteRestaurant(saDeleteRestId);
+            if (r) DB.addAdminLog('Restaurant deleted', r.name);
+            saDeleteRestId = null;
+            closeModal('modal-delete-rest');
+            showToast('Ресторантът е изтрит');
+            renderSAStats(); filterAndRender(); renderAdminLogs(); renderActivityFeed();
+        }
+
+        // ── ACTIVITY FEED ─────────────────────────────────────────────
+        function renderActivityFeed() {
+            const logs = DB.getAdminLogs().slice(0, 20);
+            const feed = document.getElementById('activity-feed');
+            const count = document.getElementById('activity-count');
+            const ICONDOT = {
+                'Restaurant created': 'green', 'Restaurant deleted': 'red', 'Restaurant updated': 'accent',
+                'Manager created': 'accent', 'Manager updated': 'accent', 'Plan changed': 'orange',
+            };
+            if (logs.length === 0) { feed.innerHTML = `<div class="empty-state" style="padding:1rem">Няма активност още.</div>`; count.textContent = ''; return; }
+            count.textContent = `(${logs.length})`;
+            feed.innerHTML = logs.map(log => {
+                const dt = new Date(log.ts);
+                const time = dt.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
+                const dot = ICONDOT[log.action] || '';
+                return `<div class="activity-item">
+      <span class="activity-dot ${dot}"></span>
+      <span class="activity-text"><strong>${log.action}</strong>${log.detail ? ' — ' + log.detail : ''}</span>
+      <span class="activity-time">${time}</span>
+    </div>`;
+            }).join('');
+        }
+
+        function renderAdminLogs() {
+            const logs = DB.getAdminLogs();
+            const list = document.getElementById('admin-logs-list');
+            if (logs.length === 0) { list.innerHTML = `<div class="empty-state" style="padding:.8rem">Няма записани действия.</div>`; return; }
+            list.innerHTML = logs.slice(0, 30).map(log => {
+                const ts = new Date(log.ts).toLocaleString('bg-BG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                return `<div class="log-item">
+      <div><div class="log-action">${log.action}</div><div class="log-detail">${log.detail}</div></div>
+      <span class="log-ts">${ts}</span>
+    </div>`;
+            }).join('');
+        }
+
+        function clearLogs() {
+            if (!confirm('Изчисти всички Admin Logs?')) return;
+            localStorage.removeItem('sf_admin_logs');
+            renderAdminLogs(); renderActivityFeed();
+            showToast('Логовете са изчистени');
+        }
+
+        function toggleLogsPanel() {
+            const p = document.getElementById('logs-panel');
+            p.style.display = p.style.display === 'none' ? '' : 'none';
+        }
+
+        // ── INIT ─────────────────────────────────────────────────────
+        initSuperAdmin();
+    </script>
+</body>
+
+</html>
