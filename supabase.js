@@ -285,7 +285,14 @@ const DB = {
   },
   addSchedule(sched) {
     const arr = JSON.parse(localStorage.getItem('sf_schedules_v3') || '[]');
-    sched.id = 'sched-' + Date.now(); arr.push(sched);
+    const existingIdx = arr.findIndex(s => s.employee_id === sched.employee_id && s.date === sched.date);
+    if (existingIdx >= 0) {
+      sched.id = arr[existingIdx].id;
+      arr[existingIdx] = sched;
+    } else {
+      sched.id = 'sched-' + Date.now();
+      arr.push(sched);
+    }
     localStorage.setItem('sf_schedules_v3', JSON.stringify(arr));
     return sched;
   },
@@ -366,6 +373,51 @@ const DB = {
   },
   getUnreadCount(userId) {
     return this.getNotifications(userId).filter(n => !n.read_by.includes(userId)).length;
+  },
+
+  // Teams
+  getTeams(restaurantId = null) {
+    const arr = JSON.parse(localStorage.getItem('sf_teams_v1') || '[]');
+    return restaurantId ? arr.filter(t => t.restaurantId === restaurantId) : arr;
+  },
+  getTeam(id) {
+    return this.getTeams().find(t => t.id === id) || null;
+  },
+  addTeam(data) {
+    const arr = this.getTeams();
+    data.id = 'team-' + Date.now();
+    data.memberIds = data.memberIds || [];
+    arr.push(data);
+    localStorage.setItem('sf_teams_v1', JSON.stringify(arr));
+    return data;
+  },
+  updateTeam(id, patch) {
+    const arr = this.getTeams();
+    const idx = arr.findIndex(t => t.id === id);
+    if (idx >= 0) arr[idx] = { ...arr[idx], ...patch };
+    localStorage.setItem('sf_teams_v1', JSON.stringify(arr));
+  },
+  deleteTeam(id) {
+    // Release all members from this team
+    const team = this.getTeam(id);
+    if (team) {
+      team.memberIds.forEach(empId => {
+        const users = JSON.parse(localStorage.getItem('sf_users_v3') || '[]');
+        const idx = users.findIndex(u => u.id === empId);
+        if (idx >= 0) { users[idx].teamId = null; users[idx].status = 'inactive'; localStorage.setItem('sf_users_v3', JSON.stringify(users)); }
+      });
+    }
+    const arr = this.getTeams().filter(t => t.id !== id);
+    localStorage.setItem('sf_teams_v1', JSON.stringify(arr));
+  },
+
+  // Team membership helpers
+  filterUnassignedEmployees(restaurantId) {
+    return this.getEmployees(restaurantId).filter(e => !e.teamId);
+  },
+  getEmployeesInTeam(teamId) {
+    return JSON.parse(localStorage.getItem('sf_users_v3') || '[]')
+      .filter(u => u.role === 'employee' && u.teamId === teamId);
   },
 };
 

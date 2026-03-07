@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    app.js — TimeLedger Team  Full Application Logic
    ================================================================ */
 'use strict';
@@ -11,9 +11,11 @@ const TRANSLATIONS = {
     login_sub: 'Управление на работни смени', lbl_username: 'Потребителско име',
     lbl_password: 'Парола', btn_login: 'Вход', hint_manager: 'Мениджър',
     hint_employees: 'Служители', role_manager: 'Мениджър', role_employee: 'Служител',
-    btn_logout: 'Изход', tab_today: 'Днес', tab_schedule: 'График',
+    btn_logout: 'Изход', tab_today: 'Табло', tab_schedule: 'График',
     tab_employees: 'Служители', tab_fines: 'Наказания', tab_reports: 'Отчети',
     tab_notifs: 'Известия', tab_profile: 'Профил', tab_dashboard: 'Табло',
+    dashboard_overview: '📊 Обзор за днес', dashboard_employees: '👥 Служители за днес',
+    dashboard_messages: '💬 Съобщения', dashboard_alerts: '⚠ Сигнали',
     tab_calendar: 'Календар', tab_history: 'История',
     today_title: '📋 Днешен изглед', cal_monthly: '📅 Месечен График',
     cal_weekly: '📅 Седмичен изглед', stat_scheduled: 'Насрочени',
@@ -42,6 +44,8 @@ const TRANSLATIONS = {
     notifs_desc: 'Напомняне за часовете', notif_time: '⏰ Час за напомняне',
     rate_desc: 'Зададена от мениджъра', lbl_work_days: 'Работни дни',
     err_wrong_creds: 'Грешно потребителско име или парола.',
+    err_no_username: 'Моля, въведете потребителско име.',
+    err_no_password: 'Моля, въведете парола.',
     err_deactivated: 'Акаунтът е деактивиран. Свържете се с мениджъра.',
     arrived: '✓ Дошъл', absent: '✗ Отсъства', fined: '⚠ Наказан',
     btn_edit: '✏️', btn_delete: '🗑',
@@ -54,7 +58,10 @@ const TRANSLATIONS = {
     role_manager: 'Manager', role_employee: 'Employee', btn_logout: 'Logout',
     tab_today: 'Today', tab_schedule: 'Schedule', tab_employees: 'Employees',
     tab_fines: 'Fines', tab_reports: 'Reports', tab_notifs: 'Notifications',
-    tab_profile: 'Profile', tab_dashboard: 'Dashboard', tab_calendar: 'Calendar',
+    tab_profile: 'Profile', tab_dashboard: 'Dashboard',
+    dashboard_overview: '📊 Today Overview', dashboard_employees: '👥 Employees Today',
+    dashboard_messages: '💬 Messages', dashboard_alerts: '⚠ Alerts',
+    tab_calendar: 'Calendar',
     tab_history: 'History', today_title: '📋 Today\'s View', cal_monthly: '📅 Monthly Schedule',
     cal_weekly: '📅 Weekly View', stat_scheduled: 'Scheduled', stat_arrived: 'Arrived',
     stat_absent: 'Absent', stat_pending: 'Unmarked', btn_add: 'Add', btn_new_emp: 'New Employee',
@@ -81,6 +88,8 @@ const TRANSLATIONS = {
     notifs_desc: 'Reminder to log hours', notif_time: '⏰ Reminder time',
     rate_desc: 'Set by manager', lbl_work_days: 'Working days',
     err_wrong_creds: 'Wrong username or password.',
+    err_no_username: 'Please enter a username.',
+    err_no_password: 'Please enter a password.',
     err_deactivated: 'Account is deactivated. Contact your manager.',
     arrived: '✓ Arrived', absent: '✗ Absent', fined: '⚠ Fined',
     btn_edit: '✏️', btn_delete: '🗑',
@@ -121,6 +130,8 @@ const TRANSLATIONS = {
     notifs_desc: 'Напоминание о часах', notif_time: '⏰ Время напоминания',
     rate_desc: 'Задано менеджером', lbl_work_days: 'Рабочие дни',
     err_wrong_creds: 'Неверный логин или пароль.',
+    err_no_username: 'Пожалуйста, введите имя пользователя.',
+    err_no_password: 'Пожалуйста, введите пароль.',
     err_deactivated: 'Аккаунт деактивирован. Обратитесь к менеджеру.',
     arrived: '✓ Пришёл', absent: '✗ Отсутствует', fined: '⚠ Штраф',
     btn_edit: '✏️', btn_delete: '🗑',
@@ -166,11 +177,10 @@ const DAYS_BG = ['Неделя', 'Понеделник', 'Вторник', 'Ср
 
 const SHIFT_TYPE_MAP = {
   regular: { label: 'Обичайна', cls: 'shift-reg', icon: '🔵' },
-  '6h': { label: '6 часа', cls: 'shift-6h', icon: '🟢' },
-  '12h': { label: '12 часа', cls: 'shift-12h', icon: '🟠' },
+  half: { label: 'Половин', cls: 'shift-6h', icon: '🟢' },
   weekend: { label: 'Уикенд', cls: 'shift-wknd', icon: '🟣' },
-  overtime: { label: 'Извънреден', cls: 'shift-ot', icon: '🔴' },
-  dayoff: { label: 'Почивен', cls: 'shift-off', icon: '⭕' },
+  overtime: { label: 'Извънредна', cls: 'shift-ot', icon: '🔴' },
+  vacation: { label: 'Отпуск', cls: 'shift-vac', icon: '🌴' },
 };
 
 function monthsArr() {
@@ -202,6 +212,10 @@ function getWeekRange(base) {
   return { from: fmtDate(mon), to: fmtDate(sun), monday: mon, sunday: sun };
 }
 function initials(name) { return (name || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(); }
+function empBadge(emp) {
+  if (!emp || !emp.trainee) return '';
+  return ' <span class="trainee-badge">🎓 Обучаващ се</span>';
+}
 function isWeekend(s) { const d = new Date(s + 'T00:00:00').getDay(); return d === 0 || d === 6; }
 
 // ── Animated counter ─────────────────────────────────────────
@@ -230,23 +244,59 @@ function logout() { Auth.logout(); }
 document.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) e.target.classList.add('hidden'); });
 
 // ── Theme ────────────────────────────────────────────────────
+function setTheme(mode) {
+  const isLight = mode === 'light';
+  document.body.classList.toggle('light', isLight);
+  localStorage.setItem('sf_theme', mode);
+  document.getElementById('theme-btn-light')?.classList.toggle('active', isLight);
+  document.getElementById('theme-btn-dark')?.classList.toggle('active', !isLight);
+  const tog = document.getElementById('mgr-theme-toggle'); if (tog) tog.checked = isLight;
+}
 function toggleTheme() {
-  document.body.classList.toggle('light');
-  const L = document.body.classList.contains('light');
-  localStorage.setItem('sf_theme', L ? 'light' : 'dark');
-  const btn = document.getElementById('theme-btn'); if (btn) btn.textContent = L ? '☀️' : '🌙';
-  ['theme-toggle', 'mgr-theme-toggle'].forEach(id => { const t = document.getElementById(id); if (t) t.checked = L; });
+  const isLight = !document.body.classList.contains('light');
+  setTheme(isLight ? 'light' : 'dark');
 }
-function toggleThemeSwitch(cb) {
-  document.body.classList.toggle('light', cb.checked);
-  localStorage.setItem('sf_theme', cb.checked ? 'light' : 'dark');
-  const btn = document.getElementById('theme-btn'); if (btn) btn.textContent = cb.checked ? '☀️' : '🌙';
-}
+function toggleThemeSwitch(cb) { setTheme(cb.checked ? 'light' : 'dark'); }
 function applyTheme() {
-  const L = localStorage.getItem('sf_theme') === 'light';
-  if (L) document.body.classList.add('light');
-  const btn = document.getElementById('theme-btn'); if (btn) btn.textContent = L ? '☀️' : '🌙';
-  ['theme-toggle', 'mgr-theme-toggle'].forEach(id => { const t = document.getElementById(id); if (t) t.checked = L; });
+  const mode = localStorage.getItem('sf_theme') || 'dark';
+  setTheme(mode);
+}
+
+// ── Notification Bell / Dropdown ─────────────────────────────
+function toggleNotifDropdown() {
+  const dd = document.getElementById('notif-dropdown');
+  if (!dd) return;
+  const isOpen = !dd.classList.contains('hidden');
+  if (isOpen) { dd.classList.add('hidden'); return; }
+  renderNotifDropdown();
+  dd.classList.remove('hidden');
+}
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('notif-bell-wrap');
+  const dd = document.getElementById('notif-dropdown');
+  if (wrap && dd && !wrap.contains(e.target)) dd.classList.add('hidden');
+});
+function renderNotifDropdown() {
+  const list = document.getElementById('notif-drop-list'); if (!list) return;
+  const notifs = DB.getNotifications().slice(-10).reverse();
+  if (!notifs.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:1rem;">Няма известия.</div>';
+    return;
+  }
+  list.innerHTML = notifs.map(n => `
+    <div class="notif-drop-item">
+      <div class="notif-drop-item-title">${n.title}</div>
+      <div class="notif-drop-item-text">${n.message}</div>
+    </div>
+  `).join('');
+}
+function updateNotifBell() {
+  const notifs = DB.getNotifications();
+  const badge = document.getElementById('notif-bell-badge');
+  const dot = document.getElementById('mgr-notif-dot');
+  const count = notifs.length;
+  if (badge) { badge.textContent = count > 9 ? '9+' : count; badge.classList.toggle('hidden', count === 0); }
+  if (dot) dot.classList.toggle('hidden', count === 0);
 }
 
 // ── Tab switch ────────────────────────────────────────────────
@@ -260,7 +310,7 @@ function switchTab(name) {
   if (name === 'mgr-profile') renderMgrProfile();
   if (name === 'reports') renderReports();
   if (name === 'emp-notifs') renderEmpNotifs();
-  if (name === 'mgr-notifs') renderMgrNotifs();
+  if (name === 'mgr-messages' || name === 'mgr-notifs') renderMgrNotifs();
   if (name === 'mgr-schedule') { renderMgrCalendar(); renderScheduleTab(); }
 }
 
@@ -291,7 +341,8 @@ async function handleLogin() {
   const btn = document.getElementById('login-btn');
   const btnText = document.getElementById('login-btn-text');
   const spinner = document.getElementById('login-spinner');
-  if (!username || !password) { errEl.textContent = I18N.t('err_wrong_creds'); errEl.classList.remove('hidden'); return; }
+  if (!username) { errEl.textContent = I18N.t('err_no_username'); errEl.classList.remove('hidden'); return; }
+  if (!password) { errEl.textContent = I18N.t('err_no_password'); errEl.classList.remove('hidden'); return; }
   errEl.classList.add('hidden');
   btnText.textContent = '...'; spinner?.classList.remove('hidden'); btn.disabled = true;
   try {
@@ -322,7 +373,8 @@ let mgr = {
 function initManagerDashboard() {
   applyTheme(); applyLang();
   const user = Auth.requireRole('manager'); if (!user) return;
-  document.getElementById('nav-username').textContent = user.name || user.username;
+  // nav-username removed from header, but keep for compatibility
+  const nu = document.getElementById('nav-username'); if (nu) nu.textContent = user.name || user.username;
   // Scope all data to user's restaurant
   mgr.restaurantId = user.restaurantId || null;
   mgr.employees = DB.getEmployees(mgr.restaurantId);
@@ -333,7 +385,7 @@ function initManagerDashboard() {
   renderEmployeesTab();
   renderPenaltiesTab();
   populateManagerSelects();
-  updateMgrNotifBadge();
+  updateNotifBell();
 }
 
 // ── TODAY VIEW ────────────────────────────────────────────────
@@ -375,8 +427,8 @@ function renderTodayView() {
         <div class="today-emp-info">
           <div class="today-avatar">${initials(emp2.name)}</div>
           <div>
-            <div class="today-emp-name">${emp2.name}</div>
-            <div class="today-emp-meta">${shiftBadge(sched.shift_type || 'regular')} <span class="today-hours">${sched.planned_hours}ч</span></div>
+            <div class="today-emp-name">${emp2.name}${empBadge(emp2)}</div>
+            <div class="today-emp-meta">${shiftBadge((sched.shift_type === 'regular' && sched.planned_hours <= 6) ? 'half' : (sched.shift_type || 'regular'))} <span class="today-hours">${sched.planned_hours}ч</span>${shift && shift.actualHours !== undefined && shift.actualHours !== sched.planned_hours ? `<span style="margin-left:6px;font-size:0.75rem;color:var(--accent);">(${shift.actualHours}ч реалн.)</span>` : ''}</div>
           </div>
         </div>
         <div>${statusPill(status)}</div>
@@ -402,6 +454,88 @@ function renderTodayView() {
   document.getElementById('stat-arrived').textContent = arrived;
   document.getElementById('stat-noshow').textContent = noshow;
   document.getElementById('stat-pending').textContent = pending;
+
+  // New: Dashboard specific sections
+  renderDashboardMessages(dateStr, shifts);
+  renderDashboardAlerts(dateStr, shifts);
+}
+
+function renderDashboardMessages(dateStr, shifts) {
+  const container = document.getElementById('dashboard-messages');
+  if (!container) return;
+  const msgs = [];
+
+  // 1. Shift notes for today
+  shifts.forEach(s => {
+    if (s.note) {
+      const emp = DB.getEmployee(s.employee_id);
+      msgs.push({
+        title: emp ? (emp.name + empBadge(emp)) : 'Служител',
+        text: s.note,
+        time: s.checkin_time || ''
+      });
+    }
+  });
+
+  // 2. Recent notifications sent by anyone to this restaurant
+  const notifs = DB.getNotifications().filter(n => n.date === dateStr).slice(0, 3);
+  notifs.forEach(n => {
+    msgs.push({
+      title: n.from_name || 'Система',
+      text: n.message,
+      time: 'Известие'
+    });
+  });
+
+  if (msgs.length === 0) {
+    container.innerHTML = '<div class="empty-state">Няма нови съобщения.</div>';
+    return;
+  }
+
+  container.innerHTML = msgs.map(m => `
+    <div class="dashboard-item dashboard-msg-item">
+      <div class="dashboard-item-name">${m.title}</div>
+      <div class="dashboard-item-text">„${m.text}“</div>
+      ${m.time ? `<div class="dashboard-item-meta">🕑 ${m.time}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderDashboardAlerts(dateStr, shifts) {
+  const container = document.getElementById('dashboard-alerts');
+  if (!container) return;
+  const alerts = [];
+
+  // 1. Absences
+  shifts.filter(s => s.status === 'absent').forEach(s => {
+    const emp = DB.getEmployee(s.employee_id);
+    alerts.push({
+      title: emp ? (emp.name + empBadge(emp)) : 'Служител',
+      text: 'Отсъства от работа'
+    });
+  });
+
+  // 2. Penalties
+  const pens = DB.getPenalties().filter(p => p.date === dateStr);
+  pens.forEach(p => {
+    const emp = DB.getEmployee(p.employee_id);
+    alerts.push({
+      title: emp ? (emp.name + empBadge(emp)) : 'Служител',
+      text: `Наказан: -${p.amount} лв. ${p.note ? `(${p.note})` : ''}`
+    });
+  });
+
+  if (alerts.length === 0) {
+    container.innerHTML = '<div class="empty-state">Няма активни сигнали.</div>';
+    return;
+  }
+
+  container.innerHTML = alerts.map(a => `
+    <div class="dashboard-item dashboard-alert-item">
+      <div class="dashboard-item-name">${a.title}</div>
+      <div class="dashboard-item-text">${a.text}</div>
+    </div>
+  `).join('');
 }
 
 function buildTodayCardActions(empId, sched, shift) {
@@ -410,24 +544,25 @@ function buildTodayCardActions(empId, sched, shift) {
             <button class="btn btn-warn btn-sm" onclick="showInlineFine('${empId}')">⚠ Наказание</button>`;
   }
   if (shift && shift.status === 'absent') {
-    return `<button class="btn btn-outline btn-sm" onclick="openEditHours('${shift.id}','${empId}','0','absent','','')">✏️ Редактирай</button>`;
+    return `<button class="btn btn-outline btn-sm" onclick="openEditHours('${shift.id}','${empId}','0','absent','','')">✏️ Редактирай</button>
+            <button class="btn btn-warn btn-sm" onclick="showInlineFine('${empId}')">⚠ Наказание</button>`;
   }
   return `
-    <button class="btn btn-success btn-sm" onclick="markArrived('${empId}','${sched.planned_hours}')">✓ ${I18N.t('arrived')}</button>
-    <button class="btn btn-warn btn-sm" onclick="markNoShow('${empId}')">✗ ${I18N.t('absent')}</button>
-    <button class="btn btn-danger btn-sm" onclick="showInlineFine('${empId}')">⚠ ${I18N.t('fined')}</button>
+    <button class="btn btn-success btn-sm" onclick="markArrived('${empId}','${sched.planned_hours}')">${I18N.t('arrived')}</button>
+    <button class="btn btn-warn btn-sm" onclick="markNoShow('${empId}','${sched.planned_hours}')">${I18N.t('absent')}</button>
+    <button class="btn btn-danger btn-sm" onclick="showInlineFine('${empId}')">${I18N.t('fined')}</button>
   `;
 }
 
-function markArrived(empId, hours) {
+function markArrived(empId, plannedHours) {
   const now = new Date();
   const checkin = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  DB.upsertShift({ employee_id: empId, date: mgr.viewDate, worked_hours: parseFloat(hours), status: 'present', note: '', checkin_time: checkin });
+  DB.upsertShift({ employee_id: empId, date: mgr.viewDate, plannedHours: parseFloat(plannedHours), actualHours: parseFloat(plannedHours), status: 'present', note: '', checkin_time: checkin });
   showToast('Отбелязан като „Дошъл" ✓');
   renderTodayView();
 }
-function markNoShow(empId) {
-  DB.upsertShift({ employee_id: empId, date: mgr.viewDate, worked_hours: 0, status: 'absent', note: 'Не се е явил', checkin_time: null });
+function markNoShow(empId, plannedHours) {
+  DB.upsertShift({ employee_id: empId, date: mgr.viewDate, plannedHours: parseFloat(plannedHours), actualHours: 0, status: 'absent', note: 'Не се е явил', checkin_time: null });
   showToast('Отбелязан като „Отсъства"', 'error');
   renderTodayView();
 }
@@ -445,7 +580,9 @@ function submitInlineFine(empId, date) {
   const reason = document.getElementById(`qfi-reason-${empId}`)?.value.trim();
   if (isNaN(amt) || amt <= 0) { showToast('Въведи сума', 'error'); return; }
   DB.addPenalty({ employee_id: empId, amount: amt, note: reason || 'Наказание', date });
-  DB.upsertShift({ employee_id: empId, date, worked_hours: 0, status: 'penalty', note: reason || '' });
+  const shift = DB.getShiftsByDate(date).find(s => s.employee_id === empId);
+  const planned = shift ? (shift.plannedHours || shift.worked_hours || 0) : 0;
+  DB.upsertShift({ employee_id: empId, date, plannedHours: planned, actualHours: 0, status: 'penalty', note: reason || '' });
   hideInlineFine(empId);
   showToast(`Наказанието е записано (-${amt} лв.)`, 'error');
   renderTodayView();
@@ -475,8 +612,10 @@ function saveQuickFine() {
 // Edit shift modal
 function openEditHours(shiftId, empId, hours, status, note, checkin) {
   const emp2 = DB.getEmployee(empId);
+  const shift = DB.getShiftsByDate(mgr.viewDate).find(s => s.id === shiftId || s.employee_id === empId);
   document.getElementById('edit-emp-name').value = emp2 ? emp2.name : empId;
-  document.getElementById('edit-hours').value = hours;
+  document.getElementById('edit-planned-hours').value = shift ? (shift.plannedHours || shift.worked_hours || hours) : hours;
+  document.getElementById('edit-hours').value = shift ? (shift.actualHours !== undefined ? shift.actualHours : shift.worked_hours) : hours;
   document.getElementById('edit-status').value = status === 'pending' ? 'present' : status;
   document.getElementById('edit-note').value = note || '';
   document.getElementById('edit-checkin-time').value = checkin || '';
@@ -487,13 +626,14 @@ function openEditHours(shiftId, empId, hours, status, note, checkin) {
 function saveEditedHours() {
   const shiftId = document.getElementById('edit-shift-id').value;
   const empId = document.getElementById('edit-shift-id').dataset.empId;
-  const hours = parseFloat(document.getElementById('edit-hours').value);
+  const actual = parseFloat(document.getElementById('edit-hours').value);
   const status = document.getElementById('edit-status').value;
   const note = document.getElementById('edit-note').value.trim();
   const checkin = document.getElementById('edit-checkin-time').value || null;
-  if (isNaN(hours) || hours < 0) { showToast('Невалидни часове', 'error'); return; }
-  if (shiftId) DB.updateShift(shiftId, { worked_hours: hours, status, note, checkin_time: checkin });
-  else DB.upsertShift({ employee_id: empId, date: mgr.viewDate, worked_hours: hours, status, note, checkin_time: checkin });
+  const planned = parseFloat(document.getElementById('edit-planned-hours').value) || 0;
+  if (isNaN(actual) || actual < 0) { showToast('Невалидни часове', 'error'); return; }
+  if (shiftId) DB.updateShift(shiftId, { plannedHours: planned, actualHours: actual, worked_hours: actual, status, note, checkin_time: checkin });
+  else DB.upsertShift({ employee_id: empId, date: mgr.viewDate, plannedHours: planned, actualHours: actual, worked_hours: actual, status, note, checkin_time: checkin });
   closeModal('modal-edit-hours');
   showToast('Смяната е записана ✓');
   renderTodayView();
@@ -540,8 +680,7 @@ function renderMgrCalendar() {
     el.innerHTML = `<span>${day}</span>${dayScheds.length > 0 ? `<span class="cal-hours">${dayScheds.length}👤</span>` : ''}`;
     el.onclick = () => {
       showMgrDayDetail(dateStr, dayScheds, dayShifts);
-      document.getElementById('sched-date').value = dateStr;
-      openModal('modal-add-schedule');
+      openFastSelectEmpModal(dateStr, dayScheds);
     };
     grid.appendChild(el);
   }
@@ -608,9 +747,9 @@ function renderScheduleTab() {
       const emp2 = DB.getEmployee(s.employee_id);
       const row = document.createElement('div'); row.className = 'sched-row';
       row.innerHTML = `
-        <span class="sched-emp-name">${emp2 ? emp2.name : '—'}</span>
+        <span class="sched-emp-name">${emp2 ? (emp2.name + empBadge(emp2)) : '—'}</span>
         <div class="sched-meta">
-          ${shiftBadge(s.shift_type || 'regular')}
+          ${shiftBadge((s.shift_type === 'regular' && s.planned_hours <= 6) ? 'half' : (s.shift_type || 'regular'))}
           ${s.note ? `<span class="sched-note">${s.note}</span>` : ''}
           <span class="sched-hours-badge">${s.planned_hours}ч</span>
           <button class="icon-btn" style="font-size:0.8rem" onclick="deleteScheduleEntry('${s.id}')" title="Изтрий">🗑</button>
@@ -629,26 +768,146 @@ function filterShiftType(type, btn) {
   btn.classList.add('active');
   renderScheduleTab();
 }
+function openFastSelectEmpModal(dateStr, daySchedsInput) {
+  const container = document.getElementById('fast-select-teams-list');
+  container.innerHTML = '';
+  document.getElementById('fast-select-date-display').textContent = 'За дата: ' + fmtDateBG(dateStr);
+
+  const employees = DB.getEmployees(mgr.restaurantId).filter(e => e.status !== 'inactive');
+  const teams = DB.getTeams(mgr.restaurantId);
+  const dayScheds = DB.getSchedulesByDate(dateStr);
+  const scheduledEmpIds = dayScheds.map(s => s.employee_id);
+
+  if (teams.length === 0 && employees.length === 0) {
+    container.innerHTML = '<div class="empty-state">Няма активни служители.</div>';
+    openModal('modal-fast-select-emp');
+    return;
+  }
+
+  let html = '';
+
+  teams.forEach(t => {
+    const pEmps = employees.filter(e => e.teamId === t.id);
+    if (pEmps.length === 0) return;
+    let scheduledCount = 0;
+    const empChips = pEmps.map(e => {
+      const isScheduled = scheduledEmpIds.includes(e.id);
+      if (isScheduled) scheduledCount++;
+      const cls = isScheduled ? 'fast-emp-chip scheduled' : 'fast-emp-chip';
+      return `<div class="${cls}" onclick="handleFastEmpClick('${e.id}', '${e.name.replace(/'/g, "\\'")}', '${dateStr}', ${isScheduled})">${e.name} ${isScheduled ? '✓' : ''}</div>`;
+    }).join('');
+
+    const isFull = scheduledCount === pEmps.length;
+    const progressCls = isFull ? 'fast-team-progress full' : 'fast-team-progress';
+
+    html += `
+       <div class="fast-team-card">
+         <div class="fast-team-header">
+            <span>${t.icon || '👥'} ${t.name}</span>
+            <span class="${progressCls}">${scheduledCount}/${pEmps.length}</span>
+         </div>
+         <div class="fast-emp-grid">${empChips}</div>
+       </div>`;
+  });
+
+  const unassigned = employees.filter(e => !e.teamId);
+  if (unassigned.length > 0) {
+    let scheduledCount = 0;
+    const empChips = unassigned.map(e => {
+      const isScheduled = scheduledEmpIds.includes(e.id);
+      if (isScheduled) scheduledCount++;
+      const cls = isScheduled ? 'fast-emp-chip scheduled' : 'fast-emp-chip';
+      return `<div class="${cls}" onclick="handleFastEmpClick('${e.id}', '${e.name.replace(/'/g, "\\'")}', '${dateStr}', ${isScheduled})">${e.name} ${isScheduled ? '✓' : ''}</div>`;
+    }).join('');
+
+    const isFull = scheduledCount === unassigned.length;
+    const progressCls = isFull ? 'fast-team-progress full' : 'fast-team-progress';
+
+    html += `
+       <div class="fast-team-card" style="border-style: dashed; border-color: var(--border);">
+         <div class="fast-team-header">
+            <span>👤 Без екип</span>
+            <span class="${progressCls}">${scheduledCount}/${unassigned.length}</span>
+         </div>
+         <div class="fast-emp-grid">${empChips}</div>
+       </div>`;
+  }
+
+  container.innerHTML = html;
+  openModal('modal-fast-select-emp');
+}
+
+function handleFastEmpClick(empId, empName, dateStr, isScheduled) {
+  if (isScheduled) {
+    if (confirm(`Искате ли да изтриете смяната на ${empName} за тази дата?`)) {
+      const existing = DB.getSchedulesByDate(dateStr).find(s => s.employee_id === empId);
+      if (existing) {
+        DB.deleteSchedule(existing.id);
+        showToast('Смяната е премахната');
+        renderScheduleTab(); renderTodayView(); renderMgrCalendar();
+        openFastSelectEmpModal(dateStr, DB.getSchedulesByDate(dateStr));
+      }
+    }
+  } else {
+    openFastAddSchedule(empId, empName, dateStr);
+  }
+}
+
+function openFastAddSchedule(empId, empName, dateStr) {
+  closeModal('modal-fast-select-emp');
+  document.getElementById('sched-emp').value = empId;
+  document.getElementById('sched-date').value = dateStr;
+  document.getElementById('fast-add-emp-name').textContent = empName;
+  document.getElementById('fast-add-date-subtitle').textContent = fmtDateBG(dateStr);
+
+  document.getElementById('sched-hours').value = '';
+  document.getElementById('sched-note').value = '';
+  const regBtn = document.querySelector('.stype-btn[data-type="regular"]');
+  if (regBtn) selectShiftType('regular', regBtn);
+
+  openModal('modal-add-schedule');
+}
+
 function selectShiftType(type, btn) {
   document.querySelectorAll('.stype-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('sched-type').value = type;
-  const hm = { regular: 8, '6h': 6, '12h': 12, weekend: 8, overtime: 10, dayoff: 0 };
+  const hm = { regular: 8, half: 4, weekend: 8, overtime: 10, vacation: 8 };
   if (hm[type] !== undefined) document.getElementById('sched-hours').value = hm[type];
 }
-function setHours(h) { document.getElementById('sched-hours').value = h; }
+function setHours(h) {
+  if (h <= 6) {
+    const halfBtn = document.querySelector('.stype-btn[data-type="half"]');
+    if (halfBtn) selectShiftType('half', halfBtn);
+  } else if (h === 8) {
+    const regBtn = document.querySelector('.stype-btn[data-type="regular"]');
+    if (regBtn) selectShiftType('regular', regBtn);
+  }
+  document.getElementById('sched-hours').value = h;
+}
 function addSchedule() {
   const empId = document.getElementById('sched-emp').value;
   const date = document.getElementById('sched-date').value;
   const hours = parseFloat(document.getElementById('sched-hours').value);
-  const type = document.getElementById('sched-type').value || 'regular';
+  let type = document.getElementById('sched-type').value || 'regular';
   const note = document.getElementById('sched-note').value.trim();
   if (!empId || !date || isNaN(hours) || hours < 0) { showToast('Попълни всички полета', 'error'); return; }
+
+  // Auto-correct: 6h or less is 'half', 8h+ is 'regular' (if not set to other specific types)
+  if (hours <= 6 && type === 'regular') type = 'half';
+  if (hours >= 8 && type === 'half') type = 'regular';
+
+  const existing = DB.getSchedulesByDate(date).find(s => s.employee_id === empId);
+  if (existing) { showToast('Служителят вече е добавен за този ден', 'error'); return; }
+
   DB.addSchedule({ employee_id: empId, date, planned_hours: hours, shift_type: type, note });
   closeModal('modal-add-schedule');
   showToast('Добавено в графика ✓');
   document.getElementById('sched-hours').value = ''; document.getElementById('sched-note').value = '';
   renderScheduleTab(); renderTodayView(); renderMgrCalendar();
+
+  // Re-open fast select so they can keep adding
+  openFastSelectEmpModal(date, DB.getSchedulesByDate(date));
 }
 function deleteScheduleEntry(id) {
   DB.deleteSchedule(id);
@@ -656,39 +915,168 @@ function deleteScheduleEntry(id) {
   renderScheduleTab(); renderTodayView(); renderMgrCalendar();
 }
 
-// ── EMPLOYEES TAB ─────────────────────────────────────────────
+// ── EMPLOYEES TAB (с Teams) ─────────────────────────────────
 function renderEmployeesTab() {
-  const emps = DB.getEmployees(mgr.restaurantId).sort((a, b) => a.name.localeCompare(b.name));
-  const grid = document.getElementById('employees-grid'); grid.innerHTML = '';
-  if (emps.length === 0) { grid.innerHTML = '<div class="empty-state">Няма служители.</div>'; return; }
+  renderTeamsRow();
+  const unassigned = DB.filterUnassignedEmployees(mgr.restaurantId).sort((a, b) => a.name.localeCompare(b.name));
+  const hdr = document.getElementById('unassigned-header');
+  const grid = document.getElementById('employees-grid');
+  grid.innerHTML = '';
+
+  // Show unassigned header only if there are unassigned employees
+  if (hdr) hdr.classList.toggle('hidden', unassigned.length === 0);
+
+  if (unassigned.length === 0 && DB.getTeams(mgr.restaurantId).length === 0) {
+    grid.innerHTML = '<div class="empty-state">Няма служители. Добави нов служител.</div>';
+    return;
+  }
+
   const { from, to } = getMonthRange(new Date().getFullYear(), new Date().getMonth());
-  emps.forEach(emp2 => {
-    const shifts = DB.getShifts(emp2.id, from, to);
-    const totalH = shifts.reduce((s, sh) => s + parseFloat(sh.worked_hours || 0), 0);
-    const penSum = DB.getPenalties(emp2.id).filter(p => p.date >= from && p.date <= to).reduce((s, p) => s + parseFloat(p.amount || 0), 0);
-    const salary = Math.max(0, totalH * parseFloat(emp2.hourly_rate || 0) - penSum);
-    const inactive = emp2.status === 'inactive';
-    const card = document.createElement('div');
-    card.className = `emp-card glass-card${inactive ? ' emp-inactive' : ''}`;
-    card.innerHTML = `
-      <div class="emp-card-header">
-        <div class="emp-avatar" style="${inactive ? 'opacity:0.5' : ''}'">${initials(emp2.name)}</div>
-        <div>
-          <div class="emp-card-name">${emp2.name}${inactive ? ' <span style="font-size:0.65rem;color:var(--red)">[Деактивиран]</span>' : ''}</div>
-          <div class="emp-card-user">@${emp2.username}</div>
+  unassigned.forEach(emp2 => renderEmpCard(emp2, grid, from, to, false));
+}
+
+function renderEmpCard(emp2, container, from, to, withTeam) {
+  const shifts = DB.getShifts(emp2.id, from, to);
+  const totalH = shifts.reduce((s, sh) => s + (sh.actualHours !== undefined ? sh.actualHours : parseFloat(sh.worked_hours || 0)), 0);
+  const penSum = DB.getPenalties(emp2.id).filter(p => p.date >= from && p.date <= to).reduce((s, p) => s + parseFloat(p.amount || 0), 0);
+  const salary = Math.max(0, totalH * parseFloat(emp2.hourly_rate || 0) - penSum);
+  // Active = in a team, Inactive = not in any team
+  const inactive = !emp2.teamId;
+  const card = document.createElement('div');
+  card.className = `emp-card glass-card${inactive ? ' emp-inactive' : ''}`;
+  card.innerHTML = `
+    <div class="emp-card-header">
+      <div class="emp-avatar" style="${inactive ? 'opacity:0.55' : ''}">${initials(emp2.name)}</div>
+      <div>
+        <div class="emp-card-name">
+          ${emp2.name}${empBadge(emp2)}
+          ${inactive ? '<span style="font-size:0.65rem;color:var(--text-faint);margin-left:4px;">[Без екип]</span>' : ''}
         </div>
+        <div class="emp-card-user">@${emp2.username}</div>
       </div>
-      <div class="emp-card-stats">
-        <div class="emp-stat"><span class="emp-stat-val">${totalH}ч</span><span class="emp-stat-lbl">Часове</span></div>
-        <div class="emp-stat"><span class="emp-stat-val">${salary.toFixed(0)} лв.</span><span class="emp-stat-lbl">Заплата</span></div>
-        <div class="emp-stat"><span class="emp-stat-val">${emp2.hourly_rate} лв.</span><span class="emp-stat-lbl">на час</span></div>
+    </div>
+    <div class="emp-card-stats">
+      <div class="emp-stat"><span class="emp-stat-val">${totalH}ч</span><span class="emp-stat-lbl">Часове</span></div>
+      <div class="emp-stat"><span class="emp-stat-val">${salary.toFixed(0)} лв.</span><span class="emp-stat-lbl">Заплата</span></div>
+      <div class="emp-stat"><span class="emp-stat-val">${emp2.hourly_rate} лв.</span><span class="emp-stat-lbl">на час</span></div>
+    </div>
+    <div class="emp-card-footer">
+      <button class="btn btn-ghost btn-xs" onclick="openEditEmployee('${emp2.id}');event.stopPropagation()">✏️ Редактирай</button>
+      <button class="btn btn-ghost btn-xs" onclick="openEmpDetail('${emp2.id}');event.stopPropagation()">📊 Детайли</button>
+    </div>`;
+  container.appendChild(card);
+}
+
+// ── TEAMS ───────────────────────────────────────────────────
+function renderTeamsRow() {
+  const row = document.getElementById('teams-row'); if (!row) return;
+  const teams = DB.getTeams(mgr.restaurantId);
+  if (teams.length === 0) { row.innerHTML = ''; return; }
+  row.innerHTML = '<div class="teams-row">' + teams.map(t => {
+    const count = DB.getEmployeesInTeam(t.id).length;
+    return '<div class="team-card glass-card" onclick="openTeamDetail(\'' + t.id + '\')">'
+      + '<div class="team-card-icon">' + (t.icon || '\ud83d\udc65') + '</div>'
+      + '<div class="team-card-name">' + t.name + '</div>'
+      + '<div class="team-card-count">' + count + ' ' + (count === 1 ? '\u0441\u043b\u0443\u0436\u0438\u0442\u0435\u043b' : '\u0441\u043b\u0443\u0436\u0438\u0442\u0435\u043b\u0438') + '</div>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+
+function openCreateTeam() {
+  document.getElementById('new-team-name').value = '';
+  document.getElementById('new-team-icon').value = '';
+  openModal('modal-create-team');
+}
+function saveCreateTeam() {
+  const name = document.getElementById('new-team-name').value.trim();
+  const icon = document.getElementById('new-team-icon').value.trim() || '👥';
+  if (!name) { showToast('Въведи название', 'error'); return; }
+  DB.addTeam({ name, icon, restaurantId: mgr.restaurantId, memberIds: [] });
+  closeModal('modal-create-team');
+  showToast(`Екип „${name}“ е създаден ✓`);
+  renderEmployeesTab();
+}
+
+function openTeamDetail(teamId) {
+  const team = DB.getTeam(teamId); if (!team) return;
+  document.getElementById('team-detail-id').value = teamId;
+  document.getElementById('team-detail-title').textContent = `${team.icon || '👥'} ${team.name}`;
+  refreshTeamDetailModal(teamId);
+  openModal('modal-team-detail');
+}
+function refreshTeamDetailModal(teamId) {
+  const team = DB.getTeam(teamId); if (!team) return;
+  const members = DB.getEmployeesInTeam(teamId);
+  document.getElementById('team-detail-count').textContent = `${members.length} служител${members.length === 1 ? '' : 'и'}`;
+  const list = document.getElementById('team-members-list'); list.innerHTML = '';
+  if (members.length === 0) { list.innerHTML = '<div class="empty-state" style="padding:0.75rem 0;">Няма членове в този екип.</div>'; }
+  members.forEach(e => {
+    const row = document.createElement('div'); row.className = 'team-member-row';
+    row.innerHTML = `
+      <div class="team-member-name">
+        <div class="team-member-avatar">${initials(e.name)}</div>
+        <span>${e.name}${empBadge(e)}</span>
       </div>
-      <div class="emp-card-footer">
-        <button class="btn btn-ghost btn-xs" onclick="openEditEmployee('${emp2.id}');event.stopPropagation()">✏️ Редактирай</button>
-        <button class="btn btn-ghost btn-xs" onclick="openEmpDetail('${emp2.id}');event.stopPropagation()">📊 Детайли</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-xs" onclick="openEditEmployee('${e.id}')">✏️</button>
+        <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="removeMemberFromTeam('${teamId}','${e.id}')">✕</button>
       </div>`;
-    grid.appendChild(card);
+    list.appendChild(row);
   });
+  // Populate add-member select with unassigned employees
+  const sel = document.getElementById('team-add-member-select'); sel.innerHTML = '<option value="">— Опция —</option>';
+  DB.filterUnassignedEmployees(mgr.restaurantId).forEach(e => sel.innerHTML += `<option value="${e.id}">${e.name}${e.trainee ? ' [🎓]' : ''}</option>`);
+}
+function addMemberToTeam() {
+  const teamId = document.getElementById('team-detail-id').value;
+  const empId = document.getElementById('team-add-member-select').value;
+  if (!empId) { showToast('Избери служител', 'error'); return; }
+  const team = DB.getTeam(teamId);
+  if (!team.memberIds.includes(empId)) {
+    team.memberIds.push(empId);
+    DB.updateTeam(teamId, { memberIds: team.memberIds });
+    DB.updateEmployee(empId, { teamId, status: 'active' });
+  }
+  refreshTeamDetailModal(teamId);
+  renderEmployeesTab();
+  showToast('Служителят е добавен ✓');
+}
+function removeMemberFromTeam(teamId, empId) {
+  const team = DB.getTeam(teamId);
+  team.memberIds = team.memberIds.filter(id => id !== empId);
+  DB.updateTeam(teamId, { memberIds: team.memberIds });
+  DB.updateEmployee(empId, { teamId: null, status: 'inactive' });
+  refreshTeamDetailModal(teamId);
+  renderEmployeesTab();
+  showToast('Служителят е премахнат');
+}
+function confirmDeleteTeam(teamId) {
+  const team = DB.getTeam(teamId); if (!team) return;
+  if (!confirm('Сигурен ли си, че искаш да изтриеш екип "' + team.name + '"?\nВсички служители ще бъдат освободени.')) return;
+  deleteTeamById(teamId);
+}
+function deleteTeamById(teamId) {
+  const team = DB.getTeam(teamId); if (!team) return;
+  DB.deleteTeam(teamId);
+  closeModal('modal-team-detail');
+  showToast(`Екип „${team.name}“ е изтрит`);
+  renderEmployeesTab();
+}
+
+// Trainee toggle
+function toggleTraineeNew() {
+  const hidden = document.getElementById('new-emp-trainee');
+  const circle = document.getElementById('new-trainee-circle');
+  const active = hidden.value !== '1'; hidden.value = active ? '1' : '0';
+  circle.classList.toggle('active', active);
+  document.getElementById('new-trainee-btn').classList.toggle('active', active);
+}
+function toggleTraineeEdit() {
+  const hidden = document.getElementById('edit-emp-trainee');
+  const circle = document.getElementById('edit-trainee-circle');
+  const active = hidden.value !== '1'; hidden.value = active ? '1' : '0';
+  circle.classList.toggle('active', active);
+  document.getElementById('edit-trainee-btn').classList.toggle('active', active);
 }
 
 function openEditEmployee(empId) {
@@ -698,6 +1086,9 @@ function openEditEmployee(empId) {
   document.getElementById('edit-emp-rate-field').value = emp2.hourly_rate;
   document.getElementById('edit-emp-pass-field').value = '';
   document.getElementById('edit-emp-status-field').value = emp2.status || 'active';
+  document.getElementById('edit-emp-trainee').value = emp2.trainee ? '1' : '0';
+  document.getElementById('edit-trainee-circle').classList.toggle('active', emp2.trainee);
+  document.getElementById('edit-trainee-btn').classList.toggle('active', emp2.trainee);
   openModal('modal-edit-employee');
 }
 function saveEditEmployee() {
@@ -705,9 +1096,12 @@ function saveEditEmployee() {
   const name = document.getElementById('edit-emp-name-field').value.trim();
   const rate = parseFloat(document.getElementById('edit-emp-rate-field').value);
   const pass = document.getElementById('edit-emp-pass-field').value.trim();
-  const status = document.getElementById('edit-emp-status-field').value;
+  const trainee = document.getElementById('edit-emp-trainee').value === '1';
+  // Automatic status based on team membership
+  const currentEmp = DB.getEmployee(id);
+  const status = currentEmp?.teamId ? 'active' : 'inactive';
   if (!name || isNaN(rate)) { showToast('Попълни полетата', 'error'); return; }
-  const upd = { name, hourly_rate: rate, status };
+  const upd = { name, hourly_rate: rate, status, trainee };
   if (pass) upd.password = pass;
   DB.updateEmployee(id, upd);
   closeModal('modal-edit-employee');
@@ -720,10 +1114,10 @@ function openEmpDetail(empId) {
   const { from, to } = getMonthRange(new Date().getFullYear(), new Date().getMonth());
   const shifts = DB.getShifts(emp2.id, from, to);
   const pens = DB.getPenalties(emp2.id).filter(p => p.date >= from && p.date <= to);
-  const totalH = shifts.reduce((s, sh) => s + parseFloat(sh.worked_hours || 0), 0);
+  const totalH = shifts.reduce((s, sh) => s + (sh.actualHours !== undefined ? sh.actualHours : parseFloat(sh.worked_hours || 0)), 0);
   const penSum = pens.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
   const salary = Math.max(0, totalH * parseFloat(emp2.hourly_rate || 0) - penSum);
-  document.getElementById('emp-detail-title').textContent = emp2.name;
+  document.getElementById('emp-detail-title').innerHTML = emp2.name + empBadge(emp2);
   document.getElementById('emp-detail-content').innerHTML = `
     <div class="profile-stats-grid" style="margin-bottom:1rem;">
       <div class="p-stat"><span class="p-val">${totalH}</span><span class="p-lbl">Часа</span></div>
@@ -747,13 +1141,17 @@ function createEmployee() {
   const username = document.getElementById('new-emp-username').value.trim();
   const password = document.getElementById('new-emp-password').value.trim();
   const rate = parseFloat(document.getElementById('new-emp-rate').value);
+  const trainee = document.getElementById('new-emp-trainee').value === '1';
   if (!name || !username || !password) { showToast('Попълни всички полета', 'error'); return; }
   try {
-    DB.createEmployee({ name, username, password, hourly_rate: rate || 0, restaurantId: mgr.restaurantId });
+    DB.createEmployee({ name, username, password, hourly_rate: rate || 0, restaurantId: mgr.restaurantId, trainee, teamId: null, status: 'inactive' });
     mgr.employees = DB.getEmployees(mgr.restaurantId);
     closeModal('modal-add-employee');
     showToast(`Служителят ${name} е създаден ✓`);
     ['new-emp-name', 'new-emp-username', 'new-emp-password', 'new-emp-rate'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('new-emp-trainee').value = '0';
+    document.getElementById('new-trainee-circle').classList.remove('active');
+    document.getElementById('new-trainee-btn').classList.remove('active');
     renderEmployeesTab(); populateManagerSelects();
   } catch (err) { showToast(err.message, 'error'); }
 }
@@ -769,7 +1167,7 @@ function renderPenaltiesTab() {
     const row = document.createElement('div'); row.className = 'penalty-row';
     row.innerHTML = `
       <div class="penalty-info">
-        <div class="penalty-emp">${emp2 ? emp2.name : '—'}</div>
+        <div class="penalty-emp">${emp2 ? (emp2.name + empBadge(emp2)) : '—'}</div>
         <div class="penalty-note">${p.note || '—'}</div>
         <div class="penalty-date">${fmtDateBG(p.date)}</div>
       </div>
@@ -809,14 +1207,14 @@ function renderReports() {
   emps.forEach(emp2 => {
     const shifts = DB.getShifts(emp2.id, from, to);
     const pens = DB.getPenalties(emp2.id).filter(p => p.date >= from && p.date <= to);
-    const h = shifts.reduce((s, sh) => s + parseFloat(sh.worked_hours || 0), 0);
-    const days = shifts.filter(s => s.worked_hours > 0).length;
+    const h = shifts.reduce((s, sh) => s + (sh.actualHours !== undefined ? sh.actualHours : parseFloat(sh.worked_hours || 0)), 0);
+    const days = shifts.filter(s => (s.actualHours !== undefined ? s.actualHours : s.worked_hours) > 0).length;
     const penSum = pens.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
     const sal = Math.max(0, h * parseFloat(emp2.hourly_rate || 0) - penSum);
     totH += h; totSal += sal; totPen += penSum;
     if (h === 0 && penSum === 0) return;
     const row = document.createElement('div'); row.className = 'table-row rep-cols';
-    row.innerHTML = `<div class="emp-name">${emp2.name}</div><div class="emp-hours">${h}ч</div><div class="emp-hours">${days}</div>
+    row.innerHTML = `<div class="emp-name">${emp2.name}${empBadge(emp2)}</div><div class="emp-hours">${h}ч</div><div class="emp-hours">${days}</div>
       <div style="color:var(--red);font-family:monospace">${penSum > 0 ? '-' + penSum.toFixed(0) + ' лв.' : '—'}</div>
       <div class="emp-hours green">${sal.toFixed(0)} лв.</div>`;
     tb.appendChild(row);
@@ -842,9 +1240,10 @@ function buildExportData() {
     DB.getShifts(emp2.id, from, to).forEach(s => {
       const pens = DB.getPenalties(emp2.id).filter(p => p.date === s.date);
       const penSum = pens.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+      const actualH = (s.actualHours !== undefined ? s.actualHours : parseFloat(s.worked_hours || 0));
       rows.push({
-        'Служител': emp2.name, 'Дата': s.date, 'Часове': s.worked_hours, 'Check-in': s.checkin_time || '',
-        'Статус': s.status, 'Наказания': penSum || '', 'Причина': pens.map(p => p.note).join('; '), 'Заплата (лв.)': (s.worked_hours * parseFloat(emp2.hourly_rate || 0)).toFixed(2)
+        'Служител': emp2.name, 'Дата': s.date, 'Часове': actualH, 'Check-in': s.checkin_time || '',
+        'Статус': s.status, 'Наказания': penSum || '', 'Причина': pens.map(p => p.note).join('; '), 'Заплата (лв.)': (actualH * parseFloat(emp2.hourly_rate || 0)).toFixed(2)
       });
     });
   });
@@ -921,11 +1320,7 @@ function renderMgrNotifs() {
     list.appendChild(div);
   });
 }
-function updateMgrNotifBadge() {
-  const dot = document.getElementById('mgr-notif-dot');
-  // Manager sees if there are any notifications to review
-  if (dot) dot.classList.toggle('hidden', DB.getNotifications().length === 0);
-}
+function updateMgrNotifBadge() { updateNotifBell(); }
 
 // ── MANAGER PROFILE ───────────────────────────────────────────
 function renderMgrProfile() {
@@ -933,8 +1328,17 @@ function renderMgrProfile() {
   const av = document.getElementById('mgr-profile-avatar'); if (av) av.textContent = initials(user.name);
   const nm = document.getElementById('mgr-profile-name'); if (nm) nm.textContent = user.name;
   const un = document.getElementById('mgr-profile-username'); if (un) un.textContent = '@' + user.username;
-  const tog = document.getElementById('mgr-theme-toggle');
-  if (tog) tog.checked = localStorage.getItem('sf_theme') === 'light';
+  // Restaurant name
+  const rn = document.getElementById('mgr-restaurant-name');
+  if (rn) {
+    const rest = DB.getRestaurant ? DB.getRestaurant(user.restaurantId) : null;
+    rn.textContent = rest ? rest.name : (user.restaurantId || '—');
+  }
+  // Theme buttons
+  const isLight = document.body.classList.contains('light');
+  document.getElementById('theme-btn-light')?.classList.toggle('active', isLight);
+  document.getElementById('theme-btn-dark')?.classList.toggle('active', !isLight);
+  const tog = document.getElementById('mgr-theme-toggle'); if (tog) tog.checked = isLight;
   applyLang();
 }
 
@@ -984,7 +1388,7 @@ function renderEmpDashboard() {
   const { from, to } = getMonthRange(y, m);
   const shifts = DB.getShifts(emp.user.id, from, to);
   const pens = DB.getPenalties(emp.user.id).filter(p => p.date >= from && p.date <= to);
-  const totalH = shifts.reduce((s, sh) => s + parseFloat(sh.worked_hours || 0), 0);
+  const totalH = shifts.reduce((s, sh) => s + (sh.actualHours !== undefined ? sh.actualHours : parseFloat(sh.worked_hours || 0)), 0);
   const rate = parseFloat(emp.user.hourly_rate || 0);
   const penSum = pens.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
   const gross = totalH * rate;
@@ -1175,7 +1579,7 @@ function renderEmpHistory() {
   const { from, to } = getMonthRange(y, m);
   const shifts = DB.getShifts(emp.user.id, from, to);
   const pens = DB.getPenalties(emp.user.id).filter(p => p.date >= from && p.date <= to);
-  const totalH = shifts.reduce((s, sh) => s + parseFloat(sh.worked_hours || 0), 0);
+  const totalH = shifts.reduce((s, sh) => s + (sh.actualHours !== undefined ? sh.actualHours : parseFloat(sh.worked_hours || 0)), 0);
   const penSum = pens.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
   const rate = parseFloat(emp.user.hourly_rate || 0);
   const salary = totalH * rate; const net = Math.max(0, salary - penSum);
@@ -1244,7 +1648,7 @@ function renderProfile() {
   const { from, to } = getMonthRange(new Date().getFullYear(), new Date().getMonth());
   const shifts = DB.getShifts(emp.user.id, from, to);
   const pens = DB.getPenalties(emp.user.id).filter(p => p.date >= from && p.date <= to);
-  const totalH = shifts.reduce((s, sh) => s + parseFloat(sh.worked_hours || 0), 0);
+  const totalH = shifts.reduce((s, sh) => s + (sh.actualHours !== undefined ? sh.actualHours : parseFloat(sh.worked_hours || 0)), 0);
   const rate = parseFloat(emp.user.hourly_rate || 0);
   const penSum = pens.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
   const salary = Math.max(0, totalH * rate - penSum);

@@ -25,22 +25,40 @@
 
   <!-- TOP NAV -->
   <nav class="topnav glass-card">
-    <div class="nav-logo">
+    <div class="nav-logo" onclick="switchTab('today')" style="cursor:pointer;">
       <span class="logo-icon">⏱</span>
       <span class="logo-text">TimeLedger Team</span>
       <span class="role-badge manager-badge" data-i18n="role_manager">Мениджър</span>
     </div>
     <div class="nav-actions">
-      <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Тема">🌙</button>
-      <span class="nav-user" id="nav-username">—</span>
-      <button class="btn btn-ghost btn-sm" onclick="logout()" data-i18n="btn_logout">Изход</button>
+      <!-- Notification Bell -->
+      <div class="notif-bell-wrap" id="notif-bell-wrap">
+        <button class="notif-bell-btn" id="notif-bell-btn" onclick="toggleNotifDropdown()">
+          🔔
+          <span class="notif-bell-badge hidden" id="notif-bell-badge">0</span>
+        </button>
+        <!-- Dropdown -->
+        <div class="notif-dropdown glass-card hidden" id="notif-dropdown">
+          <div class="notif-drop-hdr">
+            <span class="notif-drop-title">🔔 Известия</span>
+            <button class="icon-btn" onclick="toggleNotifDropdown()">✕</button>
+          </div>
+          <div id="notif-drop-list" class="notif-drop-list">
+            <div class="empty-state" style="padding:1rem;">Няма нови известия.</div>
+          </div>
+          <div class="notif-drop-footer">
+            <button onclick="switchTab('mgr-messages');toggleNotifDropdown()" class="btn btn-ghost btn-sm"
+              style="width:100%;">Виж всички</button>
+          </div>
+        </div>
+      </div>
     </div>
   </nav>
 
-  <!-- BOTTOM TAB NAV — 7 visible tabs -->
+  <!-- BOTTOM TAB NAV -->
   <nav class="bottom-nav glass-card">
     <button class="tab-btn active" data-tab="today" onclick="switchTab('today')">
-      <span class="tab-icon">📋</span><span class="tab-label" data-i18n="tab_today">Днес</span>
+      <span class="tab-icon">📊</span><span class="tab-label" data-i18n="tab_today">Табло</span>
     </button>
     <button class="tab-btn" data-tab="mgr-schedule" onclick="switchTab('mgr-schedule')">
       <span class="tab-icon">📅</span><span class="tab-label" data-i18n="tab_schedule">График</span>
@@ -52,31 +70,34 @@
       <span class="tab-icon">⚠️</span><span class="tab-label" data-i18n="tab_fines">Наказания</span>
     </button>
     <button class="tab-btn" data-tab="reports" onclick="switchTab('reports')">
-      <span class="tab-icon">📊</span><span class="tab-label" data-i18n="tab_reports">Отчети</span>
+      <span class="tab-icon">�</span><span class="tab-label" data-i18n="tab_reports">Отчети</span>
     </button>
-    <button class="tab-btn" data-tab="mgr-notifs" onclick="switchTab('mgr-notifs')">
-      <span class="tab-icon">🔔</span><span class="tab-label" data-i18n="tab_notifs">Известия</span>
+    <button class="tab-btn" data-tab="mgr-messages" onclick="switchTab('mgr-messages')">
+      <span class="tab-icon">�</span><span class="tab-label">Съобщения</span>
       <span class="notif-dot hidden" id="mgr-notif-dot"></span>
     </button>
     <button class="tab-btn" data-tab="mgr-profile" onclick="switchTab('mgr-profile')">
-      <span class="tab-icon">👤</span><span class="tab-label" data-i18n="tab_profile">Профил</span>
+      <span class="tab-icon">👤</span><span class="tab-label">Настройки</span>
     </button>
   </nav>
 
   <main class="main-content">
 
-    <!-- ===== TODAY ===== -->
+    <!-- ===== ТАБЛО ===== -->
     <section id="tab-today" class="tab-section active">
+
+      <!-- Header: title + date picker + badge on one row -->
       <div class="section-header">
-        <h2 class="section-title" data-i18n="today_title">📋 Днешен изглед</h2>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <input type="date" id="view-date-picker" class="form-input date-picker-inline"
+        <h2 class="section-title">📊 Табло</h2>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <input type="date" id="view-date-picker" class="form-input date-picker-inline" style="width:150px;"
             onchange="onDatePickerChange(this.value)" />
-          <span class="date-badge" id="today-date-label">—</span>
+          <span class="date-badge" id="today-date-label" style="white-space:nowrap;">—</span>
         </div>
       </div>
 
-      <div class="stats-row">
+      <!-- Stats Row -->
+      <div class="stats-row" style="margin-bottom:1.25rem;">
         <div class="stat-card glass-card">
           <span class="stat-num" id="stat-scheduled">0</span>
           <span class="stat-lbl" data-i18n="stat_scheduled">Насрочени</span>
@@ -95,10 +116,36 @@
         </div>
       </div>
 
-      <!-- Today employee list — mobile-card style -->
-      <div id="today-list" class="today-cards">
-        <div class="empty-state">Зареждане...</div>
+      <!-- Employees Today -->
+      <div class="db-panel glass-card" style="margin-bottom:1rem;">
+        <div class="db-panel-hdr">
+          <span class="db-panel-title"><span data-i18n="dashboard_employees">Служители за днес</span></span>
+        </div>
+        <div id="today-list" class="today-cards db-panel-body">
+          <div class="empty-state">Зареждане...</div>
+        </div>
       </div>
+
+      <!-- Messages -->
+      <div class="db-panel glass-card" style="margin-bottom:1rem;">
+        <div class="db-panel-hdr">
+          <span class="db-panel-title"><span data-i18n="dashboard_messages">Съобщения</span></span>
+        </div>
+        <div id="dashboard-messages" class="db-panel-body">
+          <div class="empty-state" style="padding:1.5rem;">Няма нови съобщения.</div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="db-panel glass-card">
+        <div class="db-panel-hdr">
+          <span class="db-panel-title"><span data-i18n="dashboard_alerts">Сигнали</span></span>
+        </div>
+        <div id="dashboard-alerts" class="db-panel-body">
+          <div class="empty-state" style="padding:1.5rem;">Няма активни сигнали.</div>
+        </div>
+      </div>
+
     </section>
 
     <!-- ===== SCHEDULE — Monthly Calendar + Weekly view ===== -->
@@ -149,14 +196,14 @@
         <span class="filter-label" data-i18n="filter_type">Вид смяна:</span>
         <button class="shift-filter-btn active" data-type="all" onclick="filterShiftType('all',this)"
           data-i18n="filter_all">Всички</button>
-        <button class="shift-filter-btn" data-type="6h" onclick="filterShiftType('6h',this)"><span
-            class="shift-badge shift-6h">6ч</span></button>
-        <button class="shift-filter-btn" data-type="12h" onclick="filterShiftType('12h',this)"><span
-            class="shift-badge shift-12h">12ч</span></button>
+        <button class="shift-filter-btn" data-type="half" onclick="filterShiftType('half',this)"><span
+            class="shift-badge shift-6h">Половин</span></button>
         <button class="shift-filter-btn" data-type="weekend" onclick="filterShiftType('weekend',this)"><span
             class="shift-badge shift-wknd">Уикенд</span></button>
         <button class="shift-filter-btn" data-type="overtime" onclick="filterShiftType('overtime',this)"><span
-            class="shift-badge shift-ot">Извънреден</span></button>
+            class="shift-badge shift-ot">Извънредна</span></button>
+        <button class="shift-filter-btn" data-type="vacation" onclick="filterShiftType('vacation',this)"><span
+            class="shift-badge shift-vac">Отпуск</span></button>
       </div>
 
       <div class="schedule-grid glass-card" id="schedule-grid">
@@ -168,9 +215,19 @@
     <section id="tab-employees" class="tab-section">
       <div class="section-header">
         <h2 class="section-title" data-i18n="tab_employees">👥 Служители</h2>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-employee')">+ <span
-            data-i18n="btn_new_emp">Нов служител</span></button>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="openCreateTeam()">+ Екип</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-employee')">+ <span
+              data-i18n="btn_new_emp">Нов служител</span></button>
+        </div>
       </div>
+
+      <!-- Teams row -->
+      <div id="teams-row" style="margin-bottom:0.875rem;"></div>
+
+
+      <!-- Unassigned employees -->
+      <div id="unassigned-header" class="unassigned-title hidden">👤 Свободни служители</div>
       <div class="employees-grid" id="employees-grid">
         <div class="empty-state">Зареждане...</div>
       </div>
@@ -274,10 +331,10 @@
       </div>
     </section>
 
-    <!-- ===== NOTIFICATIONS (MANAGER) ===== -->
-    <section id="tab-mgr-notifs" class="tab-section">
+    <!-- ===== MESSAGES (MANAGER) ===== -->
+    <section id="tab-mgr-messages" class="tab-section">
       <div class="section-header">
-        <h2 class="section-title">🔔 Известия</h2>
+        <h2 class="section-title">� Съобщения</h2>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-send-notif')">+ Изпрати</button>
       </div>
 
@@ -303,19 +360,17 @@
 
       <!-- Sent notifications list -->
       <div class="glass-card section-card">
-        <div class="card-title-row"><span class="card-title">📬 Изпратени известия</span></div>
+        <div class="card-title-row"><span class="card-title">📬 Изпратени съобщения</span></div>
         <div id="sent-notifs-list" class="shifts-list">
-          <div class="empty-state">Няма изпратени известия.</div>
+          <div class="empty-state">Няма изпратени съобщения.</div>
         </div>
       </div>
     </section>
 
-    <!-- ===== MANAGER PROFILE ===== -->
+    <!-- ===== MANAGER PROFILE / SETTINGS ===== -->
     <section id="tab-mgr-profile" class="tab-section">
-      <div class="section-header">
-        <h2 class="section-title" data-i18n="tab_profile">👤 Профил</h2>
-      </div>
 
+      <!-- Profile Hero -->
       <div class="glass-card profile-hero">
         <div class="profile-avatar" id="mgr-profile-avatar">М</div>
         <div class="profile-meta">
@@ -326,35 +381,55 @@
         </div>
       </div>
 
-      <div class="glass-card section-card">
-        <div class="card-title-row"><span class="card-title" data-i18n="settings_title">⚙️ Настройки</span></div>
-
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-label" data-i18n="setting_lang">Език</span>
-            <span class="setting-desc" data-i18n="setting_lang_desc">Смяна на езика на приложението</span>
-          </div>
-          <div class="lang-switcher-inline">
-            <button class="lang-btn" onclick="setLang('bg',this)">Български</button>
-            <button class="lang-btn" onclick="setLang('en',this)">English</button>
-            <button class="lang-btn" onclick="setLang('ru',this)">Русский</button>
-          </div>
-        </div>
-
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-label" data-i18n="setting_theme">🌙 Тъмна тема</span>
-            <span class="setting-desc" data-i18n="setting_theme_desc">Превключи тема</span>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="mgr-theme-toggle" onchange="toggleThemeSwitch(this)">
-            <span class="toggle-knob"></span>
-          </label>
+      <!-- Restaurant info -->
+      <div class="glass-card section-card" style="margin-bottom:0.875rem;">
+        <div class="card-title-row"><span class="card-title">🍽️ Ресторант</span></div>
+        <div class="setting-row" style="border:none;padding:0.3rem 0;">
+          <span style="font-size:0.85rem;color:var(--text-muted)">Название</span>
+          <span style="font-weight:700;font-size:0.88rem;" id="mgr-restaurant-name">—</span>
         </div>
       </div>
 
-      <!-- QR Check-in — UI stub (disabled, backend TODO) -->
-      <!--
+      <!-- Settings -->
+      <div class="glass-card section-card" style="margin-bottom:0.875rem;">
+        <div class="card-title-row"><span class="card-title" data-i18n="settings_title">⚙️ Настройки</span></div>
+
+        <!-- Language -->
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label" data-i18n="setting_lang">Език</span>
+            <span class="setting-desc" data-i18n="setting_lang_desc">Смяна на езика</span>
+          </div>
+          <div class="lang-switcher-inline">
+            <button class="lang-btn" onclick="setLang('bg',this)">БГ</button>
+            <button class="lang-btn" onclick="setLang('en',this)">EN</button>
+            <button class="lang-btn" onclick="setLang('ru',this)">РУ</button>
+          </div>
+        </div>
+
+        <!-- Theme -->
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Тема</span>
+            <span class="setting-desc">Визуална тема на апликацията</span>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="theme-pick-btn" id="theme-btn-light" onclick="setTheme('light')">☀️ Светла</button>
+            <button class="theme-pick-btn active" id="theme-btn-dark" onclick="setTheme('dark')">🌙 Тъмна</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account -->
+      <div class="glass-card section-card">
+        <div class="card-title-row"><span class="card-title">🔑 Акаунт</span></div>
+        <button class="btn btn-danger btn-full" style="margin-top:0.5rem;" onclick="logout()" data-i18n="btn_logout">🚪
+          Изход</button>
+      </div>
+
+    </section>
+    <!-- QR Check-in — UI stub (disabled, backend TODO) -->
+    <!--
       <div class="glass-card section-card" id="qr-section">
         <div class="card-title-row">
           <span class="card-title">📱 QR Check-in</span>
@@ -379,8 +454,6 @@
       </div>
       -->
 
-      <button class="btn btn-danger btn-full" style="margin-top:1rem;" onclick="logout()" data-i18n="btn_logout">🚪
-        Изход</button>
     </section>
 
   </main>
@@ -410,6 +483,14 @@
         <label class="form-label" data-i18n="lbl_rate">Часова ставка (лв./ч)</label>
         <input type="number" id="new-emp-rate" class="form-input" placeholder="9.00" step="0.5" />
       </div>
+      <div class="form-group">
+        <label class="form-label">Таг</label>
+        <button type="button" class="trainee-radio" id="new-trainee-btn" onclick="toggleTraineeNew()">
+          <span class="trainee-radio-circle" id="new-trainee-circle"></span>
+          🎓 Обучаващ се
+        </button>
+        <input type="hidden" id="new-emp-trainee" value="0" />
+      </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal('modal-add-employee')" data-i18n="btn_cancel">Отказ</button>
         <button class="btn btn-primary" onclick="createEmployee()" data-i18n="btn_create">Създай</button>
@@ -437,12 +518,20 @@
             без промяна)</span></label>
         <input type="text" id="edit-emp-pass-field" class="form-input" placeholder="Нова парола..." />
       </div>
-      <div class="form-group">
+      <div class="form-group" style="display:none;">
         <label class="form-label">Статус</label>
         <select id="edit-emp-status-field" class="form-input form-select">
           <option value="active">✅ Активен</option>
           <option value="inactive">🚫 Деактивиран</option>
         </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Таг</label>
+        <button type="button" class="trainee-radio" id="edit-trainee-btn" onclick="toggleTraineeEdit()">
+          <span class="trainee-radio-circle" id="edit-trainee-circle"></span>
+          🎓 Обучаващ се
+        </button>
+        <input type="hidden" id="edit-emp-trainee" value="0" />
       </div>
       <input type="hidden" id="edit-emp-id-field" />
       <div class="modal-actions">
@@ -452,31 +541,93 @@
     </div>
   </div>
 
-  <!-- Add Schedule -->
-  <div class="modal-overlay hidden" id="modal-add-schedule">
+  <!-- Create Team modal -->
+  <div class="modal-overlay hidden" id="modal-create-team">
     <div class="modal glass-card">
       <div class="modal-header">
-        <h3>📅 Добави в Графика</h3>
+        <h3>📂 Нов екип</h3>
+        <button class="icon-btn" onclick="closeModal('modal-create-team')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Название</label>
+        <input type="text" id="new-team-name" class="form-input" placeholder="Напр. Кухня, Бар, Сервитьори..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Икона (емоджи)</label>
+        <input type="text" id="new-team-icon" class="form-input" placeholder="👨‍🍳" maxlength="4"
+          style="width:80px;" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-create-team')">Отказ</button>
+        <button class="btn btn-primary" onclick="saveCreateTeam()">Създай</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Detail modal -->
+  <div class="modal-overlay hidden" id="modal-team-detail">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3 id="team-detail-title">Екип</h3>
+        <button class="icon-btn" onclick="closeModal('modal-team-detail')">✕</button>
+      </div>
+      <div class="team-detail-count" id="team-detail-count"
+        style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem;"></div>
+      <!-- Members list -->
+      <div id="team-members-list" style="margin-bottom:0.875rem;"></div>
+      <!-- Add member -->
+      <div class="form-group" style="display:flex;gap:6px;margin-bottom:0.5rem;">
+        <select id="team-add-member-select" class="form-input form-select" style="flex:1;"></select>
+        <button class="btn btn-primary btn-sm" onclick="addMemberToTeam()">Добави</button>
+      </div>
+      <input type="hidden" id="team-detail-id" />
+      <div style="display:flex;justify-content:center;margin-top:1.25rem;">
+        <button class="btn btn-danger btn-sm"
+          onclick="confirmDeleteTeam(document.getElementById('team-detail-id').value)">🗑 Изтрий екип</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fast Employee Select -->
+  <div class="modal-overlay hidden" id="modal-fast-select-emp">
+    <div class="modal glass-card" style="max-width:450px;">
+      <div class="modal-header" style="margin-bottom:0.25rem;">
+        <h3 id="fast-select-title">📅 Избери служител</h3>
+        <button class="icon-btn" onclick="closeModal('modal-fast-select-emp')">✕</button>
+      </div>
+      <div id="fast-select-date-display"
+        style="font-size:0.85rem;color:var(--accent);margin-bottom:1rem;font-weight:600;"></div>
+      <div id="fast-select-teams-list"
+        style="max-height:60vh;overflow-y:auto;padding-right:5px;display:flex;flex-direction:column;gap:0.75rem;">
+        <div class="empty-state">Зареждане...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Schedule (Ultra-fast) -->
+  <div class="modal-overlay hidden" id="modal-add-schedule">
+    <div class="modal glass-card" style="max-width:380px;">
+      <div class="modal-header" style="margin-bottom:0.5rem;">
+        <h3 id="fast-add-title">⚙️ Насрочи смяна</h3>
         <button class="icon-btn" onclick="closeModal('modal-add-schedule')">✕</button>
       </div>
-      <div class="form-group">
-        <label class="form-label" data-i18n="lbl_employee">Служител</label>
-        <select id="sched-emp" class="form-input form-select"></select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Дата</label>
-        <input type="date" id="sched-date" class="form-input" />
+      <input type="hidden" id="sched-emp" />
+      <input type="hidden" id="sched-date" />
+      <div class="form-group"
+        style="text-align:center;margin-bottom:1.25rem;background:var(--surface2);padding:0.75rem;border-radius:var(--radius-md);border:1px solid var(--border2);">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;" id="fast-add-date-subtitle"></div>
+        <div id="fast-add-emp-name" style="font-weight:700;color:var(--text-base);font-size:1.1rem;">—</div>
       </div>
       <div class="form-group">
         <label class="form-label">Вид смяна</label>
         <div class="shift-type-picker">
-          <button class="stype-btn" data-type="regular" onclick="selectShiftType('regular',this)">🔵 Обичайна</button>
-          <button class="stype-btn" data-type="6h" onclick="selectShiftType('6h',this)">🟢 6 часа</button>
-          <button class="stype-btn" data-type="12h" onclick="selectShiftType('12h',this)">🟠 12 часа</button>
+          <button class="stype-btn active" data-type="regular" onclick="selectShiftType('regular',this)">🔵
+            Обичайна</button>
+          <button class="stype-btn" data-type="half" onclick="selectShiftType('half',this)">🟢 Половин</button>
           <button class="stype-btn" data-type="weekend" onclick="selectShiftType('weekend',this)">🟣 Уикенд</button>
           <button class="stype-btn" data-type="overtime" onclick="selectShiftType('overtime',this)">🔴
-            Извънреден</button>
-          <button class="stype-btn" data-type="dayoff" onclick="selectShiftType('dayoff',this)">⭕ Почивен</button>
+            Извънредна</button>
+          <button class="stype-btn" data-type="vacation" onclick="selectShiftType('vacation',this)">🌴 Отпуск</button>
         </div>
         <input type="hidden" id="sched-type" value="regular" />
       </div>
@@ -492,7 +643,8 @@
       </div>
       <div class="form-group">
         <label class="form-label">Бележка</label>
-        <input type="text" id="sched-note" class="form-input" placeholder="Сутринна смяна..." />
+        <input type="text" id="sched-note" class="form-input" placeholder="Сутринна смяна..."
+          onkeydown="if(event.key==='Enter') addSchedule()" />
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal('modal-add-schedule')">Отказ</button>
@@ -542,15 +694,24 @@
         <label class="form-label">Служител</label>
         <input type="text" id="edit-emp-name" class="form-input" readonly />
       </div>
+      <div class="form-group" style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <label class="form-label">Планирани часове</label>
+          <input type="number" id="edit-planned-hours" class="form-input" readonly
+            style="background:var(--bg-faint);color:var(--text-muted);" />
+        </div>
+        <div style="flex:1;">
+          <label class="form-label">Реални часове</label>
+          <input type="number" id="edit-hours" class="form-input" min="0" max="24" step="0.5" />
+        </div>
+      </div>
       <div class="form-group">
-        <label class="form-label">Отработени часове</label>
         <div class="hours-picker">
           <button class="hours-btn" onclick="document.getElementById('edit-hours').value=6">6ч</button>
           <button class="hours-btn" onclick="document.getElementById('edit-hours').value=8">8ч</button>
           <button class="hours-btn" onclick="document.getElementById('edit-hours').value=10">10ч</button>
           <button class="hours-btn" onclick="document.getElementById('edit-hours').value=12">12ч</button>
         </div>
-        <input type="number" id="edit-hours" class="form-input mt-sm" min="0" max="24" step="0.5" />
       </div>
       <div class="form-group">
         <label class="form-label">Check-in час</label>
