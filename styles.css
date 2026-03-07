@@ -1321,25 +1321,27 @@ body {
 }
 
 .calendar-wrap {
-  padding: 1rem;
-  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  /* Запълва цялата ширина на секцията */
 }
 
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-  margin-bottom: 5px;
+  gap: 2px;
+  margin-bottom: 3px;
 }
 
 .cal-weekdays span {
   text-align: center;
-  font-size: 0.67rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  padding: 4px 0;
+  padding: 2px 0;
 }
 
 .wknd-hdr {
@@ -1349,24 +1351,27 @@ body {
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  gap: 2px;
 }
 
 .cal-day {
-  aspect-ratio: 1;
+  min-height: 45px;
+  /* Минимална височина */
+  height: auto;
+  aspect-ratio: 1.8 / 1;
+  /* Прави клетките по-широки, отколкото високи */
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
   background: var(--surface2);
   border: 1px solid var(--border2);
   transition: all var(--transition);
   position: relative;
-  min-height: 38px;
   overflow: hidden;
 }
 
@@ -1422,10 +1427,10 @@ body {
 }
 
 .cal-hours {
-  font-size: 0.55rem;
+  font-size: 0.48rem;
   color: inherit;
   opacity: 0.85;
-  margin-top: 1px;
+  margin-top: 0;
 }
 
 /* Day detail panel */
@@ -2341,6 +2346,26 @@ body {
 
   .tab-label {
     font-size: 0.52rem;
+  }
+
+  /* Mobile Calendar adjustments */
+  .calendar-wrap {
+    padding: 0.4rem;
+  }
+
+  .cal-day {
+    aspect-ratio: 1 / 1;
+    /* Квадратни клетки на мобилен */
+    min-height: 36px;
+    font-size: 0.75rem;
+  }
+
+  .cal-hours {
+    font-size: 0.45rem;
+  }
+
+  .cal-weekdays span {
+    font-size: 0.55rem;
   }
 }
 

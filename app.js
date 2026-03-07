@@ -538,7 +538,11 @@ function renderMgrCalendar() {
     const el = document.createElement('div');
     el.className = cls;
     el.innerHTML = `<span>${day}</span>${dayScheds.length > 0 ? `<span class="cal-hours">${dayScheds.length}👤</span>` : ''}`;
-    el.onclick = () => showMgrDayDetail(dateStr, dayScheds, dayShifts);
+    el.onclick = () => {
+      showMgrDayDetail(dateStr, dayScheds, dayShifts);
+      document.getElementById('sched-date').value = dateStr;
+      openModal('modal-add-schedule');
+    };
     grid.appendChild(el);
   }
 }
